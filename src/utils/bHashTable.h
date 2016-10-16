@@ -27,7 +27,7 @@ unsigned int badHash(char *key);
 
 hashElement *addElement(hashTable *table,char *key, void *data); //TODO: Make sure if we should allow duplicates or not
 
-hashElement *getElement(hashTable *table,char *key);
+hashElement *getElement(hashTable table,char *key);
 
 int deleteElement(hashTable *table,char *key);
 

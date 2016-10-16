@@ -77,7 +77,7 @@ hashElement *addElement(hashTable *table, char *key, void *data) {
     newElement = (hashElement *) malloc(sizeof(hashElement));
     int i;
 
-    for (i = 0; i < strlen(key); i++) {                 //We could copy the key into out struct
+    for (i = 0; i < strlen(key); i++) {                 //We could copy the key into our struct
         newElement->key[i] = key[i];
     }
 
@@ -89,28 +89,28 @@ hashElement *addElement(hashTable *table, char *key, void *data) {
         (*table)[hashNumber] = newElement;
         newElement->next = NULL;
     } else {
+                                                        //We insert at the beginning of the list
         oldElement = (*table)[hashNumber];
-        while (oldElement->next != NULL) {
-            oldElement = oldElement->next;
-        }
-        oldElement->next = newElement;
-        newElement->next = NULL;
+        (*table)[hashNumber]=newElement;
+        newElement->next=oldElement;
+
+
     }
     return newElement;
 
 }
 
-hashElement *getElement(hashTable *table, char *key) {
+hashElement *getElement(hashTable table, char *key) {
 
     hashElement *currentElement;
     unsigned int hashNumber = badHash(key);
 
     if (table[hashNumber] == NULL) return NULL;
 
-    if (strcmp((*table)[hashNumber]->key, key) == 0) {
-        return (*table)[hashNumber];
+    if (strcmp((table)[hashNumber]->key, key) == 0) {
+        return (table)[hashNumber];
     } else {
-        currentElement = (*table)[hashNumber];
+        currentElement = (table)[hashNumber];
         while (currentElement->next != NULL) {
             currentElement = currentElement->next;
             if (strcmp(currentElement->key, key) == 0) {
