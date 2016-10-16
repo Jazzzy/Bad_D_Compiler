@@ -1,12 +1,26 @@
-#include "utils/bHashTable.h"
+#include "symbolTable/symbolTable.h"
 #include <stdlib.h>
 #include <stdio.h>
 
 int main() {
 
 
+    symbolTable *mSymbolTable;
+    initSymbolTable(&mSymbolTable);
 
-    //---------------------Testing hashTable-------------------------
+    char *key = "HELLO!";
+    symbolData *symbolData1 = (symbolData *) malloc(sizeof(symbolData));
+    symbolData1->lexicalComponent = 1;
+
+    addLex(&mSymbolTable, key, symbolData1);
+    printf("Lexical component retrieved for %s: %d\n", key, searchLex(mSymbolTable, key)->lexicalComponent);
+
+    printSymbolTable(mSymbolTable);
+
+    deleteSymbolTable(&mSymbolTable);
+
+
+    /*//---------------------Testing hashTable-------------------------
     hashTable mHashTable = NULL;
     initHashTable(&mHashTable);
     char *key = "HELLO!";
@@ -19,16 +33,16 @@ int main() {
     char *key2 = "HELLO2";
     addElement(&mHashTable, key2, aux);
 
-    printf("Element has this data: %s\n",(char*)getElement(mHashTable,key2)->data);
+    printf("Element has this data: %s\n",(char*)getElement(&mHashTable,key2)->data);
 
     addElement(&mHashTable, key2, aux2);
 
-    printf("Element has this data: %s\n",(char*)getElement(mHashTable,key2)->data);
+    printf("Element has this data: %s\n",(char*)getElement(&mHashTable,key2)->data);
 
     printStatus(mHashTable);
     printData(mHashTable);
     deleteHastTable(&mHashTable);
-    //---------------------------------------------------------------
+    //---------------------------------------------------------------*/
 
 
 
