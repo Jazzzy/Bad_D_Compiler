@@ -5,7 +5,11 @@
 int main() {
 
 
+readerSystem * rs;
 
+    char * filename="/home/jazzzy/GitProjects/Bad_D_Compiler/src/main.c";
+
+    initReaderSystem(&rs,filename);
 
 
 /*

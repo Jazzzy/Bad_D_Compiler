@@ -12,13 +12,18 @@ typedef struct {
     unsigned short block;
 }sentinelPointer;
 
+typedef struct{
+    char* pointer;
+    unsigned short final;
+}blockOfData;
+
 typedef struct {
     unsigned int blockSize;
     FILE *file;
     sentinelPointer beg;
     sentinelPointer end;
-    char* block0;
-    char* block1;
+    blockOfData block0;
+    blockOfData block1;
 }readerSystem;
 
 
