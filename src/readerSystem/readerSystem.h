@@ -14,7 +14,7 @@ typedef struct {
 
 typedef struct{
     char* pointer;
-    unsigned short final;
+    //unsigned short final;
 }blockOfData;
 
 typedef struct {

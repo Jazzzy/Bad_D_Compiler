@@ -1,16 +1,43 @@
 #include "symbolTable/symbolTable.h"
 #include "readerSystem/readerSystem.h"
 #include <stdlib.h>
+#include <string.h>
 
 int main() {
 
 
-readerSystem * rs;
+    readerSystem *rs;
 
-    char * filename="/home/jazzzy/GitProjects/Bad_D_Compiler/src/main.c";
+    char *filename = "/home/jazzzy/GitProjects/Bad_D_Compiler/src/main.c";
 
-    initReaderSystem(&rs,filename);
+    initReaderSystem(&rs, filename);
 
+    int i = 0;
+
+    char c;
+    (c) = getNextChar(rs);
+    while ((c) != EOF) {
+        printf("%c", c);          //This prints every character
+        c = getNextChar(rs);
+        /*if ((i++) % 2 == 0) {
+            returnChar(rs);         //Just to check that returnChar works everywhere, we print everything twice.
+        }
+        */
+
+        //This checks that we can get lexems
+
+        if (c == EOF || (i % 10 == 0 && i != 0)) {
+            char *lex = getCurrentLex(rs);
+            printf("\nCurrent lexem: [%s], size: [%lu]\n", lex, strlen(lex));
+            free(lex);
+        }
+
+
+        i++;
+    }
+
+
+    deleteReaderSystem(&rs);
 
 /*
     symbolTable *mSymbolTable;

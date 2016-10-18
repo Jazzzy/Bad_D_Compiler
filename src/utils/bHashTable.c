@@ -100,15 +100,20 @@ hashElement *addElement(hashTable *table, char *key, void *data) {
 
     hashElement *newElement, *oldElement;
     newElement = (hashElement *) malloc(sizeof(hashElement));   //Locate memory for the new element to be added
-    int i;
 
-    int length = (int)strlen(key) + 1;
+
+                                                                //THIS COULD BE USED TO COPY THE KEY INTO OUR OWN STRUCTURE
+    /*int length = (int)strlen(key) + 1;
+
+    int i;
 
     newElement->key = (char *) malloc(length*sizeof(char));
 
-    for (i = 0; i < length; i++) {                         //We copy the key into our struct
+    for (i = 0; i < length; i++) {                              //We copy the key into our struct
         newElement->key[i] = key[i];
-    }
+    }*/
+
+    newElement->key = key;
 
     newElement->data = data;                                    //We assign the data of the element into the struct
 
