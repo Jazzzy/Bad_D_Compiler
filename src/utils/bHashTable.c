@@ -49,7 +49,8 @@ badHash(char *key) { //This controls the current hash value used by the hash fun
 
 int initHashTable(hashTable **table) {
     *table = (hashTable *) malloc(sizeof(hashTable *));                 //Reserve memory for the pointer to our table
-    **table = (hashTable) malloc(sizeof(hashElement *) * TABLESIZE);    //Reserve memory for the array of pointers to the elements
+    **table = (hashTable) malloc(
+            sizeof(hashElement *) * TABLESIZE);    //Reserve memory for the array of pointers to the elements
     return HASH_SUCCESS;
 }
 
@@ -70,13 +71,16 @@ int deleteHastTable(hashTable **table) {
             printf("Deleting element in %d: [%s]\n", i, elementToDelete->key);
             if (elementToDelete->data != NULL)
                 free(elementToDelete->data);            //We have chosen to delete the elements data when we delete the element itself if it's not set to NULL
+            free(elementToDelete->key);
             free(elementToDelete);
-            while (currentElement != NULL) {            //We iterate through all the elements in the list for that position to delete them all
+            while (currentElement !=
+                   NULL) {            //We iterate through all the elements in the list for that position to delete them all
                 elementToDelete = currentElement;
                 currentElement = elementToDelete->next;
                 printf("Deleting element in %d: [%s]\n", i, elementToDelete->key);
                 if (elementToDelete->data != NULL)
                     free(elementToDelete->data);
+                free(elementToDelete->key);
                 free(elementToDelete);
             }
         }
@@ -98,13 +102,19 @@ hashElement *addElement(hashTable *table, char *key, void *data) {
     newElement = (hashElement *) malloc(sizeof(hashElement));   //Locate memory for the new element to be added
     int i;
 
-    for (i = 0; i < strlen(key); i++) {                         //We could copy the key into our struct
+    int length = (int)strlen(key) + 1;
+
+    newElement->key = (char *) malloc(length*sizeof(char));
+
+    for (i = 0; i < length; i++) {                         //We copy the key into our struct
         newElement->key[i] = key[i];
     }
 
     newElement->data = data;                                    //We assign the data of the element into the struct
 
-    unsigned int hashNumber = badHash(key);                     //We get the position in the table with the hash function
+
+    unsigned int hashNumber = badHash(
+            key);                     //We get the position in the table with the hash function
 
     if ((*table)[hashNumber] == NULL) {                         //If there is no element in the position
         (*table)[hashNumber] = newElement;                      //We put the element there
@@ -168,6 +178,7 @@ int deleteElement(hashTable *table, char *key) {
                 parentElement->next = currentElement->next; //The parent's child will now be the son's child
                 if (currentElement->data != NULL)
                     free(currentElement->data);             //We have chosen to delete the elements data when we delete the element itself if it's not set to NULL
+                free(currentElement->key);
                 free(currentElement);                       //And we delete the element
                 return HASH_SUCCESS;
             }                                               //if we have not found the element in this iteration

@@ -13,7 +13,7 @@ typedef enum {
 typedef struct hashElement hashElement;
 
 struct hashElement {
-    char key[MAXKEYLENGTH];
+    char *key;
     void *data;
     hashElement *next;
 };

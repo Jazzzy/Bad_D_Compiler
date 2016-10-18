@@ -1,10 +1,14 @@
 #include "symbolTable/symbolTable.h"
+#include "readerSystem/readerSystem.h"
 #include <stdlib.h>
-#include <stdio.h>
 
 int main() {
 
 
+
+
+
+/*
     symbolTable *mSymbolTable;
     initSymbolTable(&mSymbolTable);
 
@@ -18,7 +22,7 @@ int main() {
     printSymbolTable(mSymbolTable);
 
     deleteSymbolTable(&mSymbolTable);
-
+*/
 
     /*//---------------------Testing hashTable-------------------------
     hashTable mHashTable = NULL;

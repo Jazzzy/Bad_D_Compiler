@@ -4,6 +4,6 @@ project(bdc)
 
 set(CMAKE_CXX_STANDARD 11)
 
-set(SOURCE_FILES main.c utils/bHashTable.c utils/bHashTable.h symbolTable/symbolTable.c symbolTable/symbolTable.h)
+set(SOURCE_FILES main.c utils/bHashTable.c utils/bHashTable.h symbolTable/symbolTable.c symbolTable/symbolTable.h readerSystem/readerSystem.c readerSystem/readerSystem.h)
 
 add_executable(bdc ${SOURCE_FILES})
