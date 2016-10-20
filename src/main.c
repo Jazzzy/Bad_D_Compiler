@@ -3,8 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-int main() {
+#define TESTING
 
+#ifdef TESTING
+
+void testReaderSystem() {
 
     readerSystem *rs;
 
@@ -13,76 +16,116 @@ int main() {
     initReaderSystem(&rs, filename);
 
     int i = 0;
-
     char c;
-    (c) = getNextChar(rs);
-    while ((c) != EOF) {
-        printf("%c", c);          //This prints every character
-        c = getNextChar(rs);
-        /*if ((i++) % 2 == 0) {
-            returnChar(rs);         //Just to check that returnChar works everywhere, we print everything twice.
+    do {
+        c = getNextChar(rs);        //We get a character
+        if (c != EOF)
+            printf("%c", c);            //Do the processing, printing in this case
+
+        /*
+        if ((i++) % 2 == 0) {
+            returnChar(rs);         //We can check that returnChar works everywhere, we print everything twice.
         }
         */
 
         //This checks that we can get lexems
-
-        if (c == EOF || (i % 10 == 0 && i != 0)) {
-            char *lex = getCurrentLex(rs);
+        //Uncomment this to see the lexems retrieved.
+        /*
+        if (c == EOF || (i % 10 == 0 && i != 0)) {      //Lets suppose we get a lexem
+            returnChar(rs);                             //Then we return the last character
+            char *lex = getCurrentLex(rs);              //And get the current lexem
             printf("\nCurrent lexem: [%s], size: [%lu]\n", lex, strlen(lex));
             free(lex);
         }
-
-
+        */
         i++;
-    }
-
+    } while ((c) != EOF);
 
     deleteReaderSystem(&rs);
+    return;
 
-/*
+}
+
+
+void testSymbolTable() {
     symbolTable *mSymbolTable;
     initSymbolTable(&mSymbolTable);
-
-    char *key = "HELLO!";
-    symbolData *symbolData1 = (symbolData *) malloc(sizeof(symbolData));
-    symbolData1->lexicalComponent = 1;
-
-    addLex(&mSymbolTable, key, symbolData1);
-    printf("Lexical component retrieved for %s: %d\n", key, searchLex(mSymbolTable, key)->lexicalComponent);
+    char c;
+    for (c = 'a'; c < 'z'; c++) {
+        char *key = (char *) malloc(sizeof(char) * 6);
+        int i = 0;
+        for (i = 0; i < 5; i++) {
+            key[i] = c;
+        }
+        key[5]='\0';
+        symbolData *symbolData1 = (symbolData *) malloc(sizeof(symbolData));
+        symbolData1->lexicalComponent = 1;
+        addLex(&mSymbolTable, key, symbolData1);
+        printf("Lexical component retrieved for %s: %d\n", key, searchLex(mSymbolTable, key)->lexicalComponent);
+    }
 
     printSymbolTable(mSymbolTable);
-
     deleteSymbolTable(&mSymbolTable);
-*/
 
-    /*//---------------------Testing hashTable-------------------------
-    hashTable mHashTable = NULL;
+    return;
+}
+
+void testHashTable() {
+    hashTable *mHashTable = NULL;
     initHashTable(&mHashTable);
-    char *key = "HELLO!";
-    char *aux = "FIRST";
-    char *aux2 = "SECOND";
-    addElement(&mHashTable, key, aux);
-    addElement(&mHashTable, key, aux2);
+
+    char *aux = NULL;
 
 
-    char *key2 = "HELLO2";
-    addElement(&mHashTable, key2, aux);
+    char *key = (char *) malloc(sizeof(char) * 6);
+    int i = 0;
+    for (i = 0; i < 6; i++) {
+        key[i] = 'a';
+    }
+    key[5]='\0';
 
-    printf("Element has this data: %s\n",(char*)getElement(&mHashTable,key2)->data);
+    char *key2 = (char *) malloc(sizeof(char) * 6);
+    for (i = 0; i < 6; i++) {
+        key2[i] = 'a';
+    }
+    key2[5]='\0';
 
-    addElement(&mHashTable, key2, aux2);
+    char *key3 = (char *) malloc(sizeof(char) * 6);
+    for (i = 0; i < 6; i++) {
+        key3[i] = 'b';
+    }
+    key3[5]='\0';
+    char *key4 = (char *) malloc(sizeof(char) * 6);
+    for (i = 0; i < 6; i++) {
+        key4[i] = 'b';
+    }
+    key4[5]='\0';
 
-    printf("Element has this data: %s\n",(char*)getElement(&mHashTable,key2)->data);
+    addElement(mHashTable, key, aux);
+    addElement(mHashTable, key2, aux);
+    addElement(mHashTable, key3, aux);
 
-    printStatus(mHashTable);
-    printData(mHashTable);
+    if (getElement(mHashTable, key2)->data != NULL)
+        printf("Element has this data: %s\n", (char *) getElement(mHashTable, key2)->data);
+
+    addElement(mHashTable, key4, aux);
+
+    if (getElement(mHashTable, key2)->data != NULL)
+        printf("Element has this data: %s\n", (char *) getElement(mHashTable, key2)->data);
+
+    printState(*mHashTable);
+    printData(*mHashTable);
+
     deleteHastTable(&mHashTable);
     //---------------------------------------------------------------*/
 
+    return;
+}
 
+#endif
 
-
-
-
-    return 0;
+int main() {
+    testSymbolTable();
+    testReaderSystem();
+    testHashTable();
 }

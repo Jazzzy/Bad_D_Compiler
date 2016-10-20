@@ -12,7 +12,7 @@
 
 u_int32_t fnv_32a_str(char *str, u_int32_t hval) {      //This is the hash function
     unsigned char *s = (unsigned char *) str;           //We get the string as unsigned chars for the algorithm
-    while (*s) {
+    while (*s != '\0') {
         hval ^= (u_int32_t) *s++;                       //XOR the hash with the current octet (a char is an octet)
         //We multiply by the 32 bit FNV magic prime mod 2^32
         //Explanation of this in: http://isthe.com/chongo/tech/comp/fnv/
@@ -51,6 +51,12 @@ int initHashTable(hashTable **table) {
     *table = (hashTable *) malloc(sizeof(hashTable *));                 //Reserve memory for the pointer to our table
     **table = (hashTable) malloc(
             sizeof(hashElement *) * TABLESIZE);    //Reserve memory for the array of pointers to the elements
+
+    int i = 0;
+    for (i = 0; i < TABLESIZE; ++i) {
+        (**table)[i] = NULL;
+    }
+
     return HASH_SUCCESS;
 }
 
@@ -102,7 +108,7 @@ hashElement *addElement(hashTable *table, char *key, void *data) {
     newElement = (hashElement *) malloc(sizeof(hashElement));   //Locate memory for the new element to be added
 
 
-                                                                //THIS COULD BE USED TO COPY THE KEY INTO OUR OWN STRUCTURE
+    //THIS COULD BE USED TO COPY THE KEY INTO OUR OWN STRUCTURE
     /*int length = (int)strlen(key) + 1;
 
     int i;
@@ -118,8 +124,7 @@ hashElement *addElement(hashTable *table, char *key, void *data) {
     newElement->data = data;                                    //We assign the data of the element into the struct
 
 
-    unsigned int hashNumber = badHash(
-            key);                     //We get the position in the table with the hash function
+    unsigned int hashNumber = badHash(key);                     //We get the position in the table with the hash function
 
     if ((*table)[hashNumber] == NULL) {                         //If there is no element in the position
         (*table)[hashNumber] = newElement;                      //We put the element there
@@ -129,8 +134,6 @@ hashElement *addElement(hashTable *table, char *key, void *data) {
         oldElement = (*table)[hashNumber];
         (*table)[hashNumber] = newElement;                      //The first element is now the new element
         newElement->next = oldElement;                          //And the next in the list is the old first element
-
-
     }
     return newElement;
 
@@ -217,10 +220,12 @@ void printState(hashTable table) {
 
     for (i = 0; i < TABLESIZE; i++) {
         if (table[i] != NULL) {
+
             usedSlots++;
             nodesInCurList = 0;
             currentElement = table[i];
             while (currentElement != NULL) {
+                printf("Current element: %s\n", currentElement->key);
                 nodesInCurList++;
                 currentElement = currentElement->next;
             }

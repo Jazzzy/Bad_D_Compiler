@@ -31,11 +31,14 @@ void initReaderSystem(readerSystem **rs, char *filename) {
         return;
     }
 
+#ifdef UNIX
     struct stat st;                                     //We read the size of the blocks in the filesystem of the file
     stat(filename, &st);
-    //(*rs)->blockSize = (unsigned int) st.st_blksize;    //TODO: Try smaller blocks
-
+    //(*rs)->blockSize = (unsigned int) st.st_blksize;
+#else
     (*rs)->blockSize = (unsigned int) 16;
+#endif
+
 
     (*rs)->block0.pointer = (char *) malloc(sizeof(char) * ((*rs)->blockSize + 1)); //Save memory for the blocks and the EOFs
     (*rs)->block1.pointer = (char *) malloc(sizeof(char) * ((*rs)->blockSize + 1));
@@ -105,7 +108,6 @@ char getNextChar(readerSystem *rs) {
 
     }
 
-
     return retChar;
 
 }
@@ -116,6 +118,7 @@ char getNextChar(readerSystem *rs) {
  * */
 void returnChar(readerSystem *rs) {
     (rs->end.pointer -= sizeof(char));  //To go to the character before we can just substract one position in the array
+
     /*
      * This makes sense because if we are in the middle of a block then there is no problem.
      *
@@ -125,7 +128,7 @@ void returnChar(readerSystem *rs) {
      * */
 }
 
-char *getCurrentLex(readerSystem *rs) { //TODO: Update the beg pointer, check for different blocks.
+char *getCurrentLex(readerSystem *rs) {
 
     char *lex = NULL;
     unsigned long size;
@@ -142,7 +145,8 @@ char *getCurrentLex(readerSystem *rs) { //TODO: Update the beg pointer, check fo
     } else {
         if (rs->beg.block == 0) {
             unsigned long size1 = (rs->block0.pointer + rs->blockSize - rs->beg.pointer) / sizeof(char);
-            unsigned long size2 = (rs->end.pointer - rs->block1.pointer) / sizeof(char);
+            long size2 = (rs->end.pointer - rs->block1.pointer) / sizeof(char);
+            if (size2 < 0) size2 = 0;
             size = size1 + size2;
             lex = (char *) malloc((size + 1) * sizeof(char));
             int j = 0;
@@ -157,7 +161,8 @@ char *getCurrentLex(readerSystem *rs) { //TODO: Update the beg pointer, check fo
             lex[size] = '\0';
         } else if (rs->beg.block == 1) {
             unsigned long size1 = (rs->block1.pointer + rs->blockSize - rs->beg.pointer) / sizeof(char);
-            unsigned long size2 = (rs->end.pointer - rs->block0.pointer) / sizeof(char);
+            long size2 = (rs->end.pointer - rs->block0.pointer) / sizeof(char);
+
             size = size1 + size2;
             lex = (char *) malloc((size + 1) * sizeof(char));
             int j = 0;
