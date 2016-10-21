@@ -1,11 +1,15 @@
 #include "symbolTable/symbolTable.h"
 #include "readerSystem/readerSystem.h"
+#include "lexicalAnalyzer/lexicalAnalyzer.h"
 #include <stdlib.h>
-#include <string.h>
 
 #define TESTING
 
 #ifdef TESTING
+//===
+//==
+//=
+//!=
 
 void testReaderSystem() {
 
@@ -57,7 +61,7 @@ void testSymbolTable() {
         for (i = 0; i < 5; i++) {
             key[i] = c;
         }
-        key[5]='\0';
+        key[5] = '\0';
         symbolData *symbolData1 = (symbolData *) malloc(sizeof(symbolData));
         symbolData1->lexicalComponent = 1;
         addLex(&mSymbolTable, key, symbolData1);
@@ -82,24 +86,24 @@ void testHashTable() {
     for (i = 0; i < 6; i++) {
         key[i] = 'a';
     }
-    key[5]='\0';
+    key[5] = '\0';
 
     char *key2 = (char *) malloc(sizeof(char) * 6);
     for (i = 0; i < 6; i++) {
         key2[i] = 'a';
     }
-    key2[5]='\0';
+    key2[5] = '\0';
 
     char *key3 = (char *) malloc(sizeof(char) * 6);
     for (i = 0; i < 6; i++) {
         key3[i] = 'b';
     }
-    key3[5]='\0';
+    key3[5] = '\0';
     char *key4 = (char *) malloc(sizeof(char) * 6);
     for (i = 0; i < 6; i++) {
         key4[i] = 'b';
     }
-    key4[5]='\0';
+    key4[5] = '\0';
 
     addElement(mHashTable, key, aux);
     addElement(mHashTable, key2, aux);
@@ -125,7 +129,30 @@ void testHashTable() {
 #endif
 
 int main() {
-    testSymbolTable();
-    testReaderSystem();
-    testHashTable();
+
+    //Init the reader system
+    readerSystem *rs;
+    char *filename = "/home/jazzzy/GitProjects/Bad_D_Compiler/src/main.c";
+    initReaderSystem(&rs, filename);
+
+    //Init the symbol table
+    symbolTable *st;
+    initSymbolTable(&st);
+
+
+    //Init the lexical analyzer
+    lexicalAnalyzer *la;
+    initLexicalAnalyzer(&la, rs, st);
+
+
+    int lexComp = getNextLexicalComponent(la);
+    while (lexComp != -1) {
+        printf("\n\nLexixal component detected: [%d]\n", lexComp);
+        lexComp = getNextLexicalComponent(la);
+    }
+
+
+    deleteLexicalAnalyzer(&la);
+    deleteSymbolTable(&st);
+    deleteReaderSystem(&rs);
 }

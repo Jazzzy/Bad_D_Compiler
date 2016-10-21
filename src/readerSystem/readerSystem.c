@@ -31,10 +31,11 @@ void initReaderSystem(readerSystem **rs, char *filename) {
         return;
     }
 
+#define UNIX
 #ifdef UNIX
     struct stat st;                                     //We read the size of the blocks in the filesystem of the file
     stat(filename, &st);
-    //(*rs)->blockSize = (unsigned int) st.st_blksize;
+    (*rs)->blockSize = (unsigned int) st.st_blksize;
 #else
     (*rs)->blockSize = (unsigned int) 16;
 #endif
@@ -136,7 +137,6 @@ char *getCurrentLex(readerSystem *rs) {
 
     if (rs->beg.block == rs->end.block) {
         size = (rs->end.pointer - rs->beg.pointer) / sizeof(char);
-
         lex = (char *) malloc((size + 1) * sizeof(char));
         for (i = 0; i < size; ++i) {
             lex[i] = rs->beg.pointer[i];

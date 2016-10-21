@@ -68,13 +68,13 @@ int deleteHastTable(hashTable **table) {
 
     int i;
     hashElement *currentElement, *elementToDelete;
-    printf("\n\nDELETING TABLE DATA ...\n\n");
+    //printf("\n\nDELETING TABLE DATA ...\n\n");
 
     for (i = 0; i < TABLESIZE; i++) {                   //We look in all the elements in the table
         if ((**table)[i] != NULL) {                     //If the element is not null
             elementToDelete = (**table)[i];             //We need to delete it
             currentElement = elementToDelete->next;     //And we save a reference to the next one in the list to delete
-            printf("Deleting element in %d: [%s]\n", i, elementToDelete->key);
+            //printf("Deleting element in %d: [%s]\n", i, elementToDelete->key);
             if (elementToDelete->data != NULL)
                 free(elementToDelete->data);            //We have chosen to delete the elements data when we delete the element itself if it's not set to NULL
             free(elementToDelete->key);
@@ -83,7 +83,7 @@ int deleteHastTable(hashTable **table) {
                    NULL) {            //We iterate through all the elements in the list for that position to delete them all
                 elementToDelete = currentElement;
                 currentElement = elementToDelete->next;
-                printf("Deleting element in %d: [%s]\n", i, elementToDelete->key);
+                //printf("Deleting element in %d: [%s]\n", i, elementToDelete->key);
                 if (elementToDelete->data != NULL)
                     free(elementToDelete->data);
                 free(elementToDelete->key);
@@ -93,7 +93,7 @@ int deleteHastTable(hashTable **table) {
     }
     free(**table);                                      //We free the array of pointers to the elements
     free(*table);                                       //And the pointer to the table
-    printf("\nDONE DELETING\n\n");
+    //printf("\nDONE DELETING\n\n");
 
     return HASH_SUCCESS;
 }
