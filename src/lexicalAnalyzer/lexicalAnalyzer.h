@@ -28,7 +28,7 @@ typedef struct {
 } lexicalAnalyzer;
 
 
-void initLexicalAnalyzer(lexicalAnalyzer **la, readerSystem *rs, symbolTable *st);
+void initLexicalAnalyzer(lexicalAnalyzer **la, readerSystem *rs, symbolTable *st, char * pathToDefine, char * pathToOperators);
 
 int getNextLexicalComponent(lexicalAnalyzer *la);
 

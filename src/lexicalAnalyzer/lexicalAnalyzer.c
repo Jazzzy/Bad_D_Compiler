@@ -6,15 +6,25 @@
 #include <stdlib.h>
 
 
-void initOperators(listOfOperators **mList) {
+void initOperators(listOfOperators **mList, char *pathToOperators) {
+
+
     int i = 0;
     *mList = (listOfOperators *) malloc(sizeof(listOfOperators));
-    (*mList)->length = 4;
+    (*mList)->length = 4;                           //TODO: Read here the length from the file.
     (*mList)->list = (operator *) malloc(sizeof(operator) * (*mList)->length);
 
-    for (i = 0; i < (*mList)->length; i++) {
+    for (i = 0; i < (*mList)->length; i++) {        //We make sure we init all the values
         (*mList)->list[i].isPossible = 1;
+        int j = 0;
+        for (j = 0; j < 4; j++) {
+            (*mList)->list[i].str[j] = '\0';
+        }
+        (*mList)->list[i].length = 0;
+        (*mList)->list[i].lexicalComponent = 0;
     }
+
+                                                    //TODO: Read here the values from the file.
     (*mList)->list[0].length = 2;
     (*mList)->list[0].str[0] = '!';
     (*mList)->list[0].str[1] = '=';
@@ -47,11 +57,14 @@ void resetListOfOperators(listOfOperators **mList) {
 }
 
 
-void initLexicalAnalyzer(lexicalAnalyzer **la, readerSystem *rs, symbolTable *st) {
+void initLexicalAnalyzer(lexicalAnalyzer **la, readerSystem *rs, symbolTable *st, char *pathToDefine, char *pathToOperators) {
     *la = (lexicalAnalyzer *) malloc(sizeof(lexicalAnalyzer));
     (*la)->mReaderSystem = rs;
-    (*la)->mSymbolTable = st;
-    initOperators(&(*la)->mListOfOperators);
+    (*la)->mSymbolTable = st;                                       //TODO: Fill the symbolTable with the define file
+
+
+
+    initOperators(&(*la)->mListOfOperators, pathToOperators);        //TODO: Fill the operator array with the operators file
 }
 
 void deleteOperators(listOfOperators **mList) {
@@ -164,45 +177,46 @@ int getNextLexicalComponent(lexicalAnalyzer *la) {
             return -1;              //Return End Of File here
 
 
-        //printf("%c", c);
-        int chkResult = checkAllOperators(la->mListOfOperators, 0, c);
+
+
+
+        //Checking for operators
+        int chkResult = checkAllOperators(la->mListOfOperators, 0, c);              //If the character can be the beginning of an operator
         if (chkResult != 0) {
-            if (chkResult == 1) {       //We already know the operator with just one character
-                int position = 1;
-                c = getNextChar(rs);
-                while (readAllFromOperator(la->mListOfOperators, position, c)) {        //But we need to read all of it's characters.
-                    position++;
+            int position = 1;
+            c = getNextChar(rs);                                                    //We take the next character to continue testing
+            chkResult = checkAllOperators(la->mListOfOperators, position, c);       //We test if the next char can be the next part of the operator
+            while (chkResult != 1) {                                                //And we test while we don't have only one operator
+                if (chkResult == 0) {                                               //If we have no operators possible then there is an error
+                    printf("ERROR PARSING ARGUMENT");
+                    return -1;
+                } else if (chkResult == 2) {                                    //If we have more than two operators possible we need to check more characters
                     c = getNextChar(rs);
+                    position++;
+                    chkResult = checkAllOperators(la->mListOfOperators, position, c);
                 }
-            } else {                    //We need to look for more characters to know the operator
-                int position = 1;
-                c = getNextChar(rs);
-                //printf("\t\t%c\n", c);
-                chkResult = checkAllOperators(la->mListOfOperators, position, c);
-                while (chkResult != 1) {
-                    if (chkResult == 0) {
-                        printf("ERROR PARSING ARGUMENT");
-                        return -1;
-                    } else if (chkResult == 2) {
-                        c = getNextChar(rs);
-                        printf("\t\t%c\n", c);
-                        position++;
-                        chkResult = checkAllOperators(la->mListOfOperators, position, c);
-                    }
-
-                }
-
             }
-            lexComp = getOnlyPossibleOperator(la->mListOfOperators);
-            char *lex = getCurrentLex(rs);
-            printf("Detected lexem: [%s]\n", lex);
-            free(lex);
-            returnChar(rs);
-            resetListOfOperators(&(la->mListOfOperators));
-            return lexComp;
+            //Here we already know the operator since it's only one option left
 
+            //But we need to read all of it's characters.
+            while (readAllFromOperator(la->mListOfOperators, position, c)) {    //So we keep reading and checking
+                position++;
+                c = getNextChar(rs);                                            //And getting the remaining characters
+            }
+            lexComp = getOnlyPossibleOperator(la->mListOfOperators);            //We get the lexical component of the only operator possible
+            char *lex = getCurrentLex(rs);                                      //Get the lexem
+            returnChar(rs);                                                     //And return the last chat that was used for checking the end of the operator
+            printf("Detected lexem: [%s]\n", lex);                              //Print it
+            free(lex);                                                          //Free it
+            resetListOfOperators(&(la->mListOfOperators));                      //Reset the operator list to make them all possible again for future iterations.
+            return lexComp;                                                     //And return the lexical component.
         } else {
-            resetListOfOperators(&(la->mListOfOperators));
+            resetListOfOperators(&(la->mListOfOperators));                      //We need to reset the list of operators to set them all to possible again.
+
+
+
+
+
         }
 
         //printf("Iteration %d", i++);

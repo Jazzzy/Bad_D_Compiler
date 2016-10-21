@@ -6,6 +6,7 @@
 #define TESTING
 
 #ifdef TESTING
+//====
 //===
 //==
 //=
@@ -130,9 +131,14 @@ void testHashTable() {
 
 int main() {
 
+    //TODO: Get this paths from the arguments
+    char *filename = "/home/jazzzy/GitProjects/Bad_D_Compiler/src/main.c";
+    char *pathToDefine = "/home/jazzzy/GitProjects/Bad_D_Compiler/src/main.c";
+    char *pathToOperators = "/home/jazzzy/GitProjects/Bad_D_Compiler/src/main.c";
+
     //Init the reader system
     readerSystem *rs;
-    char *filename = "/home/jazzzy/GitProjects/Bad_D_Compiler/src/main.c";
+
     initReaderSystem(&rs, filename);
 
     //Init the symbol table
@@ -142,7 +148,7 @@ int main() {
 
     //Init the lexical analyzer
     lexicalAnalyzer *la;
-    initLexicalAnalyzer(&la, rs, st);
+    initLexicalAnalyzer(&la, rs, st, pathToDefine, pathToOperators);
 
 
     int lexComp = getNextLexicalComponent(la);
