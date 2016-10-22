@@ -16,7 +16,7 @@ void testReaderSystem() {
 
     readerSystem *rs;
 
-    char *filename = "/home/jazzzy/GitProjects/Bad_D_Compiler/src/main.c";
+    char *filename = "/home/jazzzy/GitProjects/Bad_D_Compiler/files/regression.d";
 
     initReaderSystem(&rs, filename);
 
@@ -132,9 +132,9 @@ void testHashTable() {
 int main() {
 
     //TODO: Get this paths from the arguments
-    char *filename = "/home/jazzzy/GitProjects/Bad_D_Compiler/src/main.c";
-    char *pathToDefine = "/home/jazzzy/GitProjects/Bad_D_Compiler/src/main.c";
-    char *pathToOperators = "/home/jazzzy/GitProjects/Bad_D_Compiler/src/main.c";
+    char *filename = "/home/jazzzy/GitProjects/Bad_D_Compiler/files/regression.d";
+    char *pathToDefine = "/home/jazzzy/GitProjects/Bad_D_Compiler/src/DLang/D_DEFINE.h";
+    char *pathToOperators = "/home/jazzzy/GitProjects/Bad_D_Compiler/src/DLang/d.ope";
 
     //Init the reader system
     readerSystem *rs;

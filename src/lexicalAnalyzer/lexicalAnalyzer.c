@@ -4,49 +4,14 @@
 
 #include "lexicalAnalyzer.h"
 #include <stdlib.h>
+#include "../DLang/D_DEFINE.h"
+#include "../utils/operatorParser.h"
 
 
 void initOperators(listOfOperators **mList, char *pathToOperators) {
-
-
     int i = 0;
     *mList = (listOfOperators *) malloc(sizeof(listOfOperators));
-    (*mList)->length = 4;                           //TODO: Read here the length from the file.
-    (*mList)->list = (operator *) malloc(sizeof(operator) * (*mList)->length);
-
-    for (i = 0; i < (*mList)->length; i++) {        //We make sure we init all the values
-        (*mList)->list[i].isPossible = 1;
-        int j = 0;
-        for (j = 0; j < 4; j++) {
-            (*mList)->list[i].str[j] = '\0';
-        }
-        (*mList)->list[i].length = 0;
-        (*mList)->list[i].lexicalComponent = 0;
-    }
-
-                                                    //TODO: Read here the values from the file.
-    (*mList)->list[0].length = 2;
-    (*mList)->list[0].str[0] = '!';
-    (*mList)->list[0].str[1] = '=';
-    (*mList)->list[0].lexicalComponent = 400;
-
-
-    (*mList)->list[1].length = 2;
-    (*mList)->list[1].str[0] = '=';
-    (*mList)->list[1].str[1] = '=';
-    (*mList)->list[1].lexicalComponent = 500;
-
-
-    (*mList)->list[2].length = 3;
-    (*mList)->list[2].str[0] = '=';
-    (*mList)->list[2].str[1] = '=';
-    (*mList)->list[2].str[2] = '=';
-    (*mList)->list[2].lexicalComponent = 600;
-
-    (*mList)->list[3].length = 1;
-    (*mList)->list[3].str[0] = '=';
-    (*mList)->list[3].lexicalComponent = 900;
-
+    parseOperators(mList, pathToOperators);
 }
 
 void resetListOfOperators(listOfOperators **mList) {
@@ -64,7 +29,7 @@ void initLexicalAnalyzer(lexicalAnalyzer **la, readerSystem *rs, symbolTable *st
 
 
 
-    initOperators(&(*la)->mListOfOperators, pathToOperators);        //TODO: Fill the operator array with the operators file
+    initOperators(&(*la)->mListOfOperators, pathToOperators);
 }
 
 void deleteOperators(listOfOperators **mList) {
@@ -178,13 +143,14 @@ int getNextLexicalComponent(lexicalAnalyzer *la) {
 
 
 
-
+        printf("%c", c);
 
         //Checking for operators
         int chkResult = checkAllOperators(la->mListOfOperators, 0, c);              //If the character can be the beginning of an operator
         if (chkResult != 0) {
             int position = 1;
             c = getNextChar(rs);                                                    //We take the next character to continue testing
+            printf("%c", c);
             chkResult = checkAllOperators(la->mListOfOperators, position, c);       //We test if the next char can be the next part of the operator
             while (chkResult != 1) {                                                //And we test while we don't have only one operator
                 if (chkResult == 0) {                                               //If we have no operators possible then there is an error
