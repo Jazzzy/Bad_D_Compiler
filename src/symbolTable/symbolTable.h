@@ -28,7 +28,7 @@ typedef struct {            //More data could be added here, this will be the vo
 } symbolData;
 
 
-void initSymbolTable(symbolTable **oSymbolTable);
+void initSymbolTable(symbolTable **oSymbolTable, char *pathToDefineFile);
 
 void deleteSymbolTable(symbolTable **oSymbolTable);
 

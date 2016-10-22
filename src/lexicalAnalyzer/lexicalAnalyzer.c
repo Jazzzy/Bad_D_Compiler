@@ -4,12 +4,11 @@
 
 #include "lexicalAnalyzer.h"
 #include <stdlib.h>
-#include "../DLang/D_DEFINE.h"
+#include "../DLang/D_DEFINE_RESERVED_WORDS.h"
 #include "../utils/operatorParser.h"
 
 
 void initOperators(listOfOperators **mList, char *pathToOperators) {
-    int i = 0;
     *mList = (listOfOperators *) malloc(sizeof(listOfOperators));
     parseOperators(mList, pathToOperators);
 }
@@ -25,10 +24,7 @@ void resetListOfOperators(listOfOperators **mList) {
 void initLexicalAnalyzer(lexicalAnalyzer **la, readerSystem *rs, symbolTable *st, char *pathToDefine, char *pathToOperators) {
     *la = (lexicalAnalyzer *) malloc(sizeof(lexicalAnalyzer));
     (*la)->mReaderSystem = rs;
-    (*la)->mSymbolTable = st;                                       //TODO: Fill the symbolTable with the define file
-
-
-
+    (*la)->mSymbolTable = st;
     initOperators(&(*la)->mListOfOperators, pathToOperators);
 }
 
@@ -56,7 +52,11 @@ short detectOperator(operator *anOperator, int position, char c) {
 
     short toReturn;
     toReturn = anOperator->length <= position || (anOperator->str[position] == c);
+
+    //printf("VALID: %c and %c? %d\n", anOperator->str[position], c, toReturn);
+
     //printf("RETURNING: %d\n\n", toReturn);
+
     return toReturn;
 }
 
@@ -143,14 +143,13 @@ int getNextLexicalComponent(lexicalAnalyzer *la) {
 
 
 
-        printf("%c", c);
+        //printf("%c", c);
 
         //Checking for operators
         int chkResult = checkAllOperators(la->mListOfOperators, 0, c);              //If the character can be the beginning of an operator
         if (chkResult != 0) {
             int position = 1;
-            c = getNextChar(rs);                                                    //We take the next character to continue testing
-            printf("%c", c);
+            c = getNextChar(rs);
             chkResult = checkAllOperators(la->mListOfOperators, position, c);       //We test if the next char can be the next part of the operator
             while (chkResult != 1) {                                                //And we test while we don't have only one operator
                 if (chkResult == 0) {                                               //If we have no operators possible then there is an error

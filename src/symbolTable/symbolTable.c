@@ -4,13 +4,18 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "symbolTable.h"
+#include "../utils/defineParser.h"
 
 
-void initSymbolTable(symbolTable **oSymbolTable) {
+void initSymbolTable(symbolTable **oSymbolTable, char *pathToDefineFile) {
     *oSymbolTable = (symbolTable *) malloc(
             sizeof(symbolTable));     //We reserve memory for the struct of the symbol table
     initHashTable(&((*oSymbolTable)->identifiers));                 //And for both hash tables we use
     initHashTable(&((*oSymbolTable)->reserved));
+
+
+    parseReservedWords(oSymbolTable, pathToDefineFile);
+
 }
 
 void deleteSymbolTable(symbolTable **oSymbolTable) {
@@ -35,7 +40,7 @@ int addReservedWork(symbolTable **oSymbolTable, char *lex, symbolData *data) {  
     return (addElement(((*oSymbolTable)->reserved), lex, (void *) data) != NULL);   //We add the word to the reserved words table
 }
 
-void printSymbolTable(symbolTable *oSymbolTable){
+void printSymbolTable(symbolTable *oSymbolTable) {
     printf("\n\n----------------PRINTING STATUS AND DATA OF THE RESERVED WORDS TABLE----------------\n\n");
     printState(*oSymbolTable->reserved);
     printData(*oSymbolTable->reserved);

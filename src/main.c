@@ -3,14 +3,8 @@
 #include "lexicalAnalyzer/lexicalAnalyzer.h"
 #include <stdlib.h>
 
-#define TESTING
 
 #ifdef TESTING
-//====
-//===
-//==
-//=
-//!=
 
 void testReaderSystem() {
 
@@ -133,7 +127,7 @@ int main() {
 
     //TODO: Get this paths from the arguments
     char *filename = "/home/jazzzy/GitProjects/Bad_D_Compiler/files/regression.d";
-    char *pathToDefine = "/home/jazzzy/GitProjects/Bad_D_Compiler/src/DLang/D_DEFINE.h";
+    char *pathToDefine = "/home/jazzzy/GitProjects/Bad_D_Compiler/src/DLang/D_DEFINE_RESERVED_WORDS.h";
     char *pathToOperators = "/home/jazzzy/GitProjects/Bad_D_Compiler/src/DLang/d.ope";
 
     //Init the reader system
@@ -143,7 +137,7 @@ int main() {
 
     //Init the symbol table
     symbolTable *st;
-    initSymbolTable(&st);
+    initSymbolTable(&st, pathToDefine);
 
 
     //Init the lexical analyzer
