@@ -3,18 +3,26 @@
 //
 
 #include "operatorParser.h"
+#include "../errorManager/errorManager.h"
 #include <stdlib.h>
 
 void parseOperators(listOfOperators **mList, char *pathToOperators) {
 
     FILE *file = fopen(pathToOperators, "r");       //Open the file
+
+    if (file == NULL) {
+        char buffer[256];
+        sprintf(buffer, "Error opening file: %s\n", pathToOperators);
+        manageFatalError(ERR_FILE_ERROR, buffer);
+    }
+
     char line[256];                                 //Save space for a line, should not be longer than 256
 
     int length = 0, i;
 
     fgets(line, sizeof(line), file);
     sscanf(line, "%d\n", &length);
-    //printf("LENGTH: %d\n", length);
+
 
     (*mList)->length = length;
     (*mList)->list = (operator *) malloc(sizeof(operator) * (*mList)->length);
@@ -38,8 +46,6 @@ void parseOperators(listOfOperators **mList, char *pathToOperators) {
         }
         (*mList)->list[i].length = opeLength;
         (*mList)->list[i].lexicalComponent = opeLexComp;
-        /*printf("OPERATOR DATA: LENGTH [%d][%d], STRING [%s], LEXICAL COMPONENT [%d]\n", opeLength, (*mList)->list[i].length, (*mList)->list[i].str,
-               (*mList)->list[i].lexicalComponent);*/
         i++;
     }
 

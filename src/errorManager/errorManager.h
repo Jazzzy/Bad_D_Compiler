@@ -7,7 +7,8 @@
 
 typedef enum {
     ERR_UNEXPECTED_EOF,
-    ERR_BAD_OPERATOR
+    ERR_BAD_OPERATOR,
+    ERR_FILE_ERROR
 } errorType;
 
 

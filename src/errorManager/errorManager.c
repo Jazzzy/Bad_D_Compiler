@@ -19,6 +19,9 @@ void printMessageFor(int code) {
         case ERR_BAD_OPERATOR:
             printf("Malformed Operator");
             break;
+        case ERR_FILE_ERROR:
+            printf("Error managing external file");
+            break;
 
         default:
             printf("No message for that code.");
@@ -33,9 +36,12 @@ void manageFatalErrorWithLine(int code, char *message, int line) {
     printf("\n\t%s\n\thappened at line %d\n\n", message, line);
 
 
-    deleteLexicalAnalyzer(&global_la);
-    deleteSymbolTable(&global_st);
-    deleteReaderSystem(&global_rs);
+    if (global_la != NULL)
+        deleteLexicalAnalyzer(&global_la);
+    if (global_st != NULL)
+        deleteSymbolTable(&global_st);
+    if (global_rs != NULL)
+        deleteReaderSystem(&global_rs);
 
 
     exit(EXIT_FAILURE);
@@ -48,9 +54,12 @@ void manageFatalError(int code, char *message) {
     printf("\n\t%s\n\n", message);
 
 
-    deleteLexicalAnalyzer(&global_la);
-    deleteSymbolTable(&global_st);
-    deleteReaderSystem(&global_rs);
+    if (global_la != NULL)
+        deleteLexicalAnalyzer(&global_la);
+    if (global_st != NULL)
+        deleteSymbolTable(&global_st);
+    if (global_rs != NULL)
+        deleteReaderSystem(&global_rs);
 
 
     exit(EXIT_FAILURE);

@@ -125,34 +125,54 @@ void testHashTable() {
 #endif
 
 
-lexicalAnalyzer *global_la;
-symbolTable *global_st;
-readerSystem *global_rs;
+lexicalAnalyzer *global_la = NULL;
+symbolTable *global_st = NULL;
+readerSystem *global_rs = NULL;
 
-int main() {
+/*
+ * We can compile this with :
 
-    //TODO: Get this paths from the arguments
+
+gcc main.c utils/bHashTable.c utils/bHashTable.h symbolTable/symbolTable.c symbolTable/symbolTable.h readerSystem/readerSystem.c readerSystem/readerSystem.h lexicalAnalyzer/lexicalAnalyzer.c lexicalAnalyzer/lexicalAnalyzer.h DLang/D_DEFINE_RESERVED_WORDS.h utils/operatorParser.c utils/operatorParser.h utils/defineParser.c utils/defineParser.h lexicalAnalyzer/lexicalHelper.c lexicalAnalyzer/lexicalHelper.h DLang/D_DEFINE_NON_RESERVED_WORDS.h errorManager/errorManager.c errorManager/errorManager.h -o ../bin/bdc
+
+ *
+ */
+
+
+int main(int argc, char **argv) {
+
+    //TODO: Get this paths from the list of arguments
+
     char *filename = "/home/jazzzy/GitProjects/Bad_D_Compiler/files/regression.d";
     char *pathToDefine = "/home/jazzzy/GitProjects/Bad_D_Compiler/src/DLang/D_DEFINE_RESERVED_WORDS.h";
     char *pathToOperators = "/home/jazzzy/GitProjects/Bad_D_Compiler/src/DLang/d.ope";
 
+    if (argc < 4) {
+        printf("Not Enough arguments, We need:\n\tA file to compile\n\tA file with the reserved words\n\tA File that defines the operators\n\n");
+        printf("We will provide our own files just for this time :) , but this may not work. :( \n\n");
+    } else {
+        filename = argv[1];
+        pathToDefine = argv[2];
+        pathToOperators = argv[3];
+    }
+
+
     //Init the reader system
-    readerSystem *rs;
+    readerSystem *rs = NULL;
 
     initReaderSystem(&rs, filename);
+    global_rs = rs;
 
     //Init the symbol table
-    symbolTable *st;
+    symbolTable *st = NULL;
     initSymbolTable(&st, pathToDefine);
-
+    global_st = st;
 
     //Init the lexical analyzer
-    lexicalAnalyzer *la;
+    lexicalAnalyzer *la = NULL;
     initLexicalAnalyzer(&la, rs, st, pathToDefine, pathToOperators);
-
     global_la = la;
-    global_st = st;
-    global_rs = rs;
+
 
     int lexComp = getNextLexicalComponent(la);
     while (lexComp != END_OF_FILE) {
