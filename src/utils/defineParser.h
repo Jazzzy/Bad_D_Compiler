@@ -7,7 +7,7 @@
 
 #include "../symbolTable/symbolTable.h"
 
-void parseReservedWords(symbolTable **oSymbolTable,  char *pathToDefineFile);
+void parseReservedWords(symbolTable **oSymbolTable, char *pathToDefineFile);
 
 
 #endif //BDC_DEFINEPARSER_H

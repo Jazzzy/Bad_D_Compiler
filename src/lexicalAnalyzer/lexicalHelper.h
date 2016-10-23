@@ -39,4 +39,18 @@ short isScapeCharacter(char c);
 
 short isBinFirst(char c);
 
+short couldBeComment(char c);
+
+short isBegOfNestedComment(char c);
+
+short isBegOfBlockComment(char c);
+
+short isBegOfLineComment(char c);
+
+short readUntilEndOfNestedComment(lexicalAnalyzer *la, char *c);
+
+short readUntilEndOfBlockComment(lexicalAnalyzer *la, char *c);
+
+short readUntilEndOfLineComment(lexicalAnalyzer *la, char *c);
+
 #endif //BDC_LEXICALHELPER_H

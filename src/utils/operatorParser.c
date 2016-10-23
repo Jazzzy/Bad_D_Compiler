@@ -22,7 +22,7 @@ void parseOperators(listOfOperators **mList, char *pathToOperators) {
     i = 0;
     while (fgets(line, sizeof(line), file)) {
         int j;
-        int opeLength=4;
+        int opeLength = 4;
         char opeString[4] = "\0\0\0";
         unsigned int opeLexComp;
 

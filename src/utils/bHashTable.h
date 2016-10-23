@@ -8,7 +8,7 @@ typedef enum {
 
 
 #define MAXKEYLENGTH 100
-#define TABLESIZE 10007
+#define TABLESIZE 10009
 
 typedef struct hashElement hashElement;
 

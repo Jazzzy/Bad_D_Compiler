@@ -13,6 +13,16 @@
 #define STRING_LITERAL 604
 #define END_OF_FILE 666
 
+
+#define GENERIC_COMMENT 605
+
+//This or this?
+
+#define NESTED_COMMENT 605
+#define BLOCK_COMMENT 605
+#define LINE_COMMENT 605
+
+
 //OPERATORS
 
 

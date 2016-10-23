@@ -165,4 +165,5 @@ int main() {
     deleteLexicalAnalyzer(&la);
     deleteSymbolTable(&st);
     deleteReaderSystem(&rs);
+
 }

@@ -4,6 +4,7 @@
 
 #include "lexicalHelper.h"
 #include "lexicalAnalyzer.h"
+#include "../errorManager/errorManager.h"
 #include <ctype.h>
 #include <stdio.h>
 
@@ -31,6 +32,86 @@ void readEmptyData(lexicalAnalyzer *la, char *c) {
     }
 
 
+}
+
+short readUntilEndOfNestedComment(lexicalAnalyzer *la, char *c) {
+
+
+    for (;;) {
+
+        if (*c == EOF) {//ERROR CHECKING FOR END OF FILE
+            manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "EOF found inside a nested comment", la->currentLine);
+            return -1;
+        }
+
+        if (*c == '\n') {
+            la->currentLine++;
+        }
+
+        if (couldBeComment(*c)) {                       //We could have found the beggining of another nested comment
+            *c = getNextChar(la->mReaderSystem);        //We get the next char
+            if (isBegOfNestedComment(*c)) {             //And test for the beginning of another nested comment
+                readUntilEndOfNestedComment(la, c);     //If it is we call this function again to search for the end
+            }
+        }
+
+        if (*c == '+') {
+            *c = getNextChar(la->mReaderSystem);        //We get the next char
+            if (*c == '/') {                            //And test for the end of the nested comment
+                *c = getNextChar(la->mReaderSystem);
+                return 1;
+            }
+
+        }
+
+        *c = getNextChar(la->mReaderSystem);
+    }
+
+}
+
+short readUntilEndOfBlockComment(lexicalAnalyzer *la, char *c) {
+
+
+    for (;;) {
+
+        if (*c == EOF) {//ERROR CHECKING FOR END OF FILE
+            manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "EOF found inside a block comment", la->currentLine);
+            return -1;
+        }
+
+        if (*c == '\n') {
+            la->currentLine++;
+        }
+
+        if (*c == '*') {
+            *c = getNextChar(la->mReaderSystem);        //We get the next char
+            if (*c == '/') {                            //And test for the end of the nested comment
+                *c = getNextChar(la->mReaderSystem);
+                return 1;
+            }
+        }
+
+        *c = getNextChar(la->mReaderSystem);
+    }
+
+}
+
+short readUntilEndOfLineComment(lexicalAnalyzer *la, char *c) {
+
+    for (;;) {
+
+        if (*c == EOF) {
+            return 1;
+        }
+
+        if (*c == '\n') {
+            *c = getNextChar(la->mReaderSystem);
+            return 1;
+        }
+
+        *c = getNextChar(la->mReaderSystem);
+
+    }
 }
 
 short couldBeIdent(char c) {
@@ -91,3 +172,20 @@ short isScapeCharacter(char c) {
 short isBinFirst(char c) {
     return (c == '0');
 }
+
+short couldBeComment(char c) {
+    return (c == '/');
+}
+
+short isBegOfNestedComment(char c) {
+    return (c == '+');
+}
+
+short isBegOfBlockComment(char c) {
+    return (c == '*');
+}
+
+short isBegOfLineComment(char c) {
+    return (c == '/');
+}
+
