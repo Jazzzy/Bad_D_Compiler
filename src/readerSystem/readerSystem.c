@@ -81,6 +81,36 @@ void deleteReaderSystem(readerSystem **rs) {
     return;
 }
 
+
+void advanceBeginning(readerSystem *rs) {
+    rs->beg.pointer += sizeof(char);
+    char retChar = *(rs->beg.pointer);
+
+    if (retChar == EOF) {               //We have found an EOF, could be in the end of the block or the file
+        if ((rs->beg.pointer == (rs->block0.pointer + rs->blockSize * sizeof(char))) ||
+            (rs->beg.pointer == (rs->block1.pointer + rs->blockSize * sizeof(char)))) {     //We are on the end of the block
+            //We are on one of our inserted EOF
+            if (rs->beg.block == 1) {               //If we are on the block 1
+                readNextBlock(rs, &(rs->block0));   //We read the next block on block 0
+                rs->beg.block = 0;                  //We mark the block of the end pointer to be 0
+                rs->beg.pointer = rs->block0.pointer;   //We set the pointer to the beginning of the block
+                retChar = *(rs->end.pointer);           //We read the character at the beginning of the block
+            } else if (rs->beg.block == 0) {        //If we are on block 0
+                readNextBlock(rs, &(rs->block1));   //Same as above but with block 1
+                rs->beg.block = 1;
+                rs->beg.pointer = rs->block1.pointer;
+                retChar = *(rs->end.pointer);
+            }
+        } else { //We have found the true EOF
+            return;
+        }
+
+    }
+
+
+}
+
+
 char getNextChar(readerSystem *rs) {
 
     rs->end.pointer += sizeof(char);    //We advance a position in the end pointer

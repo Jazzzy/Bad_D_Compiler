@@ -10,12 +10,12 @@
 typedef struct {
     char *pointer;
     unsigned short block;
-}sentinelPointer;
+} sentinelPointer;
 
-typedef struct{
-    char* pointer;
+typedef struct {
+    char *pointer;
     //unsigned short final;
-}blockOfData;
+} blockOfData;
 
 typedef struct {
     unsigned int blockSize;
@@ -24,10 +24,10 @@ typedef struct {
     sentinelPointer end;
     blockOfData block0;
     blockOfData block1;
-}readerSystem;
+} readerSystem;
 
 
-void initReaderSystem(readerSystem **rs, char* filename);
+void initReaderSystem(readerSystem **rs, char *filename);
 
 void deleteReaderSystem(readerSystem **rs);
 
@@ -37,5 +37,6 @@ void returnChar(readerSystem *rs);
 
 char *getCurrentLex(readerSystem *rs);
 
+void advanceBeginning(readerSystem *rs);
 
 #endif //BDC_READERSYSTEM_H

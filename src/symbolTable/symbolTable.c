@@ -28,7 +28,9 @@ symbolData *searchLex(symbolTable *oSymbolTable, char *lex) {
     hashElement *mElement = getElement((oSymbolTable->reserved), lex);  //We look first in the reserved words table
     if (mElement == NULL) {                                             //If the lexem is not a reserved word
         mElement = getElement((oSymbolTable->identifiers), lex);        //Then we look in the identifiers table
+
     }
+    if (mElement == NULL) return NULL;
     return (symbolData *) mElement->data;                               //And return the result which can be NULL
 }
 

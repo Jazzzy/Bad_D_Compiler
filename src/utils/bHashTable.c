@@ -225,7 +225,7 @@ void printState(hashTable table) {
             nodesInCurList = 0;
             currentElement = table[i];
             while (currentElement != NULL) {
-                printf("Current element: %s\n", currentElement->key);
+                //printf("Current element: %s\n", currentElement->key);
                 nodesInCurList++;
                 currentElement = currentElement->next;
             }

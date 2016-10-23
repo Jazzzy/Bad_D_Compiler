@@ -25,10 +25,11 @@ typedef struct {
     readerSystem *mReaderSystem;
     symbolTable *mSymbolTable;
     listOfOperators *mListOfOperators;
+    unsigned int currentLine;
 } lexicalAnalyzer;
 
 
-void initLexicalAnalyzer(lexicalAnalyzer **la, readerSystem *rs, symbolTable *st, char * pathToDefine, char * pathToOperators);
+void initLexicalAnalyzer(lexicalAnalyzer **la, readerSystem *rs, symbolTable *st, char *pathToDefine, char *pathToOperators);
 
 int getNextLexicalComponent(lexicalAnalyzer *la);
 

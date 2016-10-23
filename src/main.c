@@ -1,6 +1,7 @@
 #include "symbolTable/symbolTable.h"
 #include "readerSystem/readerSystem.h"
 #include "lexicalAnalyzer/lexicalAnalyzer.h"
+#include "DLang/D_DEFINE_NON_RESERVED_WORDS.h"
 #include <stdlib.h>
 
 
@@ -123,6 +124,11 @@ void testHashTable() {
 
 #endif
 
+
+lexicalAnalyzer *global_la;
+symbolTable *global_st;
+readerSystem *global_rs;
+
 int main() {
 
     //TODO: Get this paths from the arguments
@@ -144,13 +150,17 @@ int main() {
     lexicalAnalyzer *la;
     initLexicalAnalyzer(&la, rs, st, pathToDefine, pathToOperators);
 
+    global_la = la;
+    global_st = st;
+    global_rs = rs;
 
     int lexComp = getNextLexicalComponent(la);
-    while (lexComp != -1) {
-        printf("\n\nLexixal component detected: [%d]\n", lexComp);
+    while (lexComp != END_OF_FILE) {
+        printf("Lexixal component detected: [%d]\n\n", lexComp);
         lexComp = getNextLexicalComponent(la);
     }
 
+    printSymbolTable(st);
 
     deleteLexicalAnalyzer(&la);
     deleteSymbolTable(&st);
