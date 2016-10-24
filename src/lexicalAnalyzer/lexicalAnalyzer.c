@@ -19,6 +19,7 @@
  *  -What should we do with number and string literals? Store them?
  *  -What should we do with comments, ignore them or send them?
  *  -Should we insert an identifier in the symbol table when we see it more than once?
+ *  -Do we need an explicit syntactical analyzer or can it be in the main?
  *
  *
  * */
