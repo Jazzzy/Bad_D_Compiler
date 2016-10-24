@@ -5,6 +5,7 @@
 #include "lexicalHelper.h"
 #include "lexicalAnalyzer.h"
 #include "../errorManager/errorManager.h"
+#include "../readerSystem/readerSystem.h"
 #include <ctype.h>
 #include <stdio.h>
 
@@ -15,11 +16,11 @@ short notRelevantChar(char c) {
 void readEmptyData(lexicalAnalyzer *la, char *c) {
 
     while (notRelevantChar(*c)) {
-        switch (*c) {
-            case '\n':
+        switch (*c) {                                           //Use this in case we want to consider data like tabs or newlines.
+            /*case '\n':
                 la->currentLine++;                              //We update the number of line.
                 //printf("\n\nLINE [%d]\n\n", la->currentLine);
-                break;
+                break;*/
             default:
                 break;
         }
@@ -39,17 +40,17 @@ short readUntilEndOfNestedComment(lexicalAnalyzer *la, char *c) {
 
     for (;;) {
 
+        short readAnotherOne = 1;
+
         if (*c == EOF) {//ERROR CHECKING FOR END OF FILE
-            manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "EOF found inside a nested comment", la->currentLine);
+            manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "EOF found inside a nested comment", la->mReaderSystem->currentLine,
+                                     la->mReaderSystem->currentPosition);
             return -1;
         }
 
-        if (*c == '\n') {
-            la->currentLine++;
-        }
-
-        if (couldBeComment(*c)) {                       //We could have found the beggining of another nested comment
+        if (couldBeComment(*c)) {                       //We could have found the beginning of another nested comment
             *c = getNextChar(la->mReaderSystem);        //We get the next char
+            readAnotherOne = 0;
             if (isBegOfNestedComment(*c)) {             //And test for the beginning of another nested comment
                 readUntilEndOfNestedComment(la, c);     //If it is we call this function again to search for the end
             }
@@ -57,41 +58,43 @@ short readUntilEndOfNestedComment(lexicalAnalyzer *la, char *c) {
 
         if (*c == '+') {
             *c = getNextChar(la->mReaderSystem);        //We get the next char
+            readAnotherOne = 0;
             if (*c == '/') {                            //And test for the end of the nested comment
                 *c = getNextChar(la->mReaderSystem);
                 return 1;
             }
-
         }
 
-        *c = getNextChar(la->mReaderSystem);
+        if (readAnotherOne)
+            *c = getNextChar(la->mReaderSystem);
     }
 
 }
 
 short readUntilEndOfBlockComment(lexicalAnalyzer *la, char *c) {
 
-
     for (;;) {
 
-        if (*c == EOF) {//ERROR CHECKING FOR END OF FILE
-            manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "EOF found inside a block comment", la->currentLine);
-            return -1;
-        }
+        short readAnotherOne = 1;
 
-        if (*c == '\n') {
-            la->currentLine++;
+        if (*c == EOF) {//ERROR CHECKING FOR END OF FILE
+            manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "EOF found inside a block comment", la->mReaderSystem->currentLine,
+                                     la->mReaderSystem->currentPosition);
+            return -1;
         }
 
         if (*c == '*') {
             *c = getNextChar(la->mReaderSystem);        //We get the next char
+            readAnotherOne = 0;
             if (*c == '/') {                            //And test for the end of the nested comment
                 *c = getNextChar(la->mReaderSystem);
                 return 1;
             }
         }
 
-        *c = getNextChar(la->mReaderSystem);
+        if (readAnotherOne)
+            *c = getNextChar(la->mReaderSystem);
+
     }
 
 }
@@ -105,7 +108,7 @@ short readUntilEndOfLineComment(lexicalAnalyzer *la, char *c) {
         }
 
         if (*c == '\n') {
-            *c = getNextChar(la->mReaderSystem);
+            //*c = getNextChar(la->mReaderSystem);
             return 1;
         }
 

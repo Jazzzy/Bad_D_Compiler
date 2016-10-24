@@ -6,27 +6,39 @@
 #include "symbolTable.h"
 #include "../utils/defineParser.h"
 
-
+/**
+ * Initializes the symbol table and reserves memory for all its data
+ * including the hash tables
+ *
+ * */
 void initSymbolTable(symbolTable **oSymbolTable, char *pathToDefineFile) {
     *oSymbolTable = (symbolTable *) malloc(
-            sizeof(symbolTable));     //We reserve memory for the struct of the symbol table
+            sizeof(symbolTable));                                   //We reserve memory for the struct of the symbol table
     initHashTable(&((*oSymbolTable)->identifiers));                 //And for both hash tables we use
     initHashTable(&((*oSymbolTable)->reserved));
 
 
-    parseReservedWords(oSymbolTable, pathToDefineFile);
+    parseReservedWords(oSymbolTable, pathToDefineFile);             //We parse the reserved words from a file with the parser.
 
 }
 
+/**
+ * Deletes the hash tables and the symbol table itself.
+ *
+ * */
 void deleteSymbolTable(symbolTable **oSymbolTable) {
     deleteHastTable(&((*oSymbolTable)->identifiers));               //First we delete the hash tables
     deleteHastTable(&((*oSymbolTable)->reserved));
     free(*oSymbolTable);                                            //And then the struct of the symbol table itself
 }
 
+/**
+ * Searches for a lexeme in both hash tables.
+ *
+ * */
 symbolData *searchLex(symbolTable *oSymbolTable, char *lex) {
     hashElement *mElement = getElement((oSymbolTable->reserved), lex);  //We look first in the reserved words table
-    if (mElement == NULL) {                                             //If the lexem is not a reserved word
+    if (mElement == NULL) {                                             //If the lexeme is not a reserved word
         mElement = getElement((oSymbolTable->identifiers), lex);        //Then we look in the identifiers table
 
     }
@@ -34,20 +46,24 @@ symbolData *searchLex(symbolTable *oSymbolTable, char *lex) {
     return (symbolData *) mElement->data;                               //And return the result which can be NULL
 }
 
-int addLex(symbolTable **oSymbolTable, char *lex, symbolData *data) {                   //This adds a lexem to the table of identifiers
-    return (addElement(((*oSymbolTable)->identifiers), lex, (void *) data) != NULL);    //We add the lexem to the identifiers table
+/**
+ * Ads a lexeme to the identifiers table.
+ *
+ * */
+int addLex(symbolTable **oSymbolTable, char *lex, symbolData *data) {                   //This adds a lexeme to the table of identifiers
+    return (addElement(((*oSymbolTable)->identifiers), lex, (void *) data) != NULL);    //We add the lexeme to the identifiers table
 }
 
-int addReservedWork(symbolTable **oSymbolTable, char *lex, symbolData *data) {      //This adds a word to the table of reserved words
-    return (addElement(((*oSymbolTable)->reserved), lex, (void *) data) != NULL);   //We add the word to the reserved words table
-}
-
+/**
+ * Prints the state and data of both hash tables in a given moment
+ *
+ * */
 void printSymbolTable(symbolTable *oSymbolTable) {
-    printf("\n\n----------------PRINTING STATUS AND DATA OF THE RESERVED WORDS TABLE----------------\n\n");
+    printf("\n\n----------------PRINTING STATE AND DATA OF THE RESERVED WORDS TABLE----------------\n\n");
     printState(*oSymbolTable->reserved);
     printData(*oSymbolTable->reserved);
 
-    printf("\n\n----------------PRINTING STATUS AND DATA OF THE IDENTIFIERS TABLE----------------\n\n");
+    printf("\n\n----------------PRINTING STATE AND DATA OF THE IDENTIFIERS TABLE----------------\n\n");
     printState(*oSymbolTable->identifiers);
     printData(*oSymbolTable->identifiers);
 

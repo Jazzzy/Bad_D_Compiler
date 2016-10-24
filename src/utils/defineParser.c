@@ -40,7 +40,6 @@ void parseReservedWords(symbolTable **oSymbolTable, char *pathToDefineFile) {
         symbolData *msymbolData = (symbolData *) malloc(sizeof(symbolData));
         msymbolData->lexicalComponent = LexCompBuf;
         addElement(((*oSymbolTable)->reserved), key, (void *) msymbolData);
-        //printf("RESERVED WORD DATA: DEFINED [%s], LEXICAL COMPONENT [%d], STRING TO DETECT [%s], LENGTH: [%d]\n", defBuf, msymbolData->lexicalComponent, key,strlen(key));
     }
 
     fclose(file);

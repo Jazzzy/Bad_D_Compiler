@@ -10,6 +10,11 @@
 //---------------------HASH FUNCTION-------------------------
 #define FNV1_32_INIT ((u_int32_t)0x811c9dc5)
 
+
+/**
+ * Hash function known as FNV-1A
+ *
+ * */
 u_int32_t fnv_32a_str(char *str, u_int32_t hval) {      //This is the hash function
     unsigned char *s = (unsigned char *) str;           //We get the string as unsigned chars for the algorithm
     while (*s != '\0') {
@@ -22,8 +27,12 @@ u_int32_t fnv_32a_str(char *str, u_int32_t hval) {      //This is the hash funct
     return hval;
 }
 
+/**
+ * Function that just acts as an interface for the hash function.
+ *
+ * */
 unsigned int
-badHash(char *key) { //This controls the current hash value used by the hash function and makes the call to it
+badHash(char *key) {                                    //This controls the current hash value used by the hash function and makes the call to it
     return (fnv_32a_str(key, FNV1_32_INIT)) % TABLESIZE;
 }
 //-----------------------------------------------------------
@@ -33,11 +42,11 @@ badHash(char *key) { //This controls the current hash value used by the hash fun
 
 
 //--------------------TABLE LOGIC----------------------------
-/*
- * The key gets copied because we don't want to run the risk of some other part of the code
- * deleting the key data.
+/**
+ * The key does not gets copied since in this implementation we manage the deletion of the
+ * keys but not the allocation of its memory
  *
- * That said, the data itself is not copied since this could come at a higher cost and we
+ * The data itself is also not copied since this could come at a high cost and we
  * assume that we are not deleting the data we need since this hash table will be used just to
  * locate the data fast.
  *
@@ -46,11 +55,15 @@ badHash(char *key) { //This controls the current hash value used by the hash fun
  *
  * */
 
-
+/**
+ * Reserves memory for the whole table
+ * and sets its elements to NULL
+ *
+ * */
 int initHashTable(hashTable **table) {
     *table = (hashTable *) malloc(sizeof(hashTable *));                 //Reserve memory for the pointer to our table
     **table = (hashTable) malloc(
-            sizeof(hashElement *) * TABLESIZE);    //Reserve memory for the array of pointers to the elements
+            sizeof(hashElement *) * TABLESIZE);                         //Reserve memory for the array of pointers to the elements
 
     int i = 0;
     for (i = 0; i < TABLESIZE; ++i) {
@@ -60,7 +73,11 @@ int initHashTable(hashTable **table) {
     return HASH_SUCCESS;
 }
 
-
+/**
+ * Deletes all elements from the hash table (key and data)
+ * To then delete the table itself
+ *
+ * */
 int deleteHastTable(hashTable **table) {
 
     if (table == NULL || *table == NULL || **table == NULL)
@@ -68,22 +85,19 @@ int deleteHastTable(hashTable **table) {
 
     int i;
     hashElement *currentElement, *elementToDelete;
-    //printf("\n\nDELETING TABLE DATA ...\n\n");
 
     for (i = 0; i < TABLESIZE; i++) {                   //We look in all the elements in the table
         if ((**table)[i] != NULL) {                     //If the element is not null
             elementToDelete = (**table)[i];             //We need to delete it
             currentElement = elementToDelete->next;     //And we save a reference to the next one in the list to delete
-            //printf("Deleting element in %d: [%s]\n", i, elementToDelete->key);
             if (elementToDelete->data != NULL)
                 free(elementToDelete->data);            //We have chosen to delete the elements data when we delete the element itself if it's not set to NULL
             free(elementToDelete->key);
             free(elementToDelete);
             while (currentElement !=
-                   NULL) {            //We iterate through all the elements in the list for that position to delete them all
+                   NULL) {                              //We iterate through all the elements in the list for that position to delete them all
                 elementToDelete = currentElement;
                 currentElement = elementToDelete->next;
-                //printf("Deleting element in %d: [%s]\n", i, elementToDelete->key);
                 if (elementToDelete->data != NULL)
                     free(elementToDelete->data);
                 free(elementToDelete->key);
@@ -93,11 +107,13 @@ int deleteHastTable(hashTable **table) {
     }
     free(**table);                                      //We free the array of pointers to the elements
     free(*table);                                       //And the pointer to the table
-    //printf("\nDONE DELETING\n\n");
 
     return HASH_SUCCESS;
 }
 
+/**
+ * Adds a new element to the hash table
+ * */
 hashElement *addElement(hashTable *table, char *key, void *data) {
 
     if (table == NULL || *table == NULL)
@@ -108,8 +124,12 @@ hashElement *addElement(hashTable *table, char *key, void *data) {
     newElement = (hashElement *) malloc(sizeof(hashElement));   //Locate memory for the new element to be added
 
 
-    //THIS COULD BE USED TO COPY THE KEY INTO OUR OWN STRUCTURE
-    /*int length = (int)strlen(key) + 1;
+    //Uncomment the next line if you want to copy the key instead of just using the one that is given.
+    //#define HASHTABLE_COPYKEY
+
+
+#ifdef HASHTABLE_COPYKEY
+    int length = (int)strlen(key) + 1;
 
     int i;
 
@@ -117,7 +137,8 @@ hashElement *addElement(hashTable *table, char *key, void *data) {
 
     for (i = 0; i < length; i++) {                              //We copy the key into our struct
         newElement->key[i] = key[i];
-    }*/
+    }
+#endif
 
     newElement->key = key;
 
@@ -139,6 +160,11 @@ hashElement *addElement(hashTable *table, char *key, void *data) {
 
 }
 
+/**
+ * We ge the element corresponding to a given key
+ * Returns NULL if it does not exist on the table.
+ *
+ * */
 hashElement *getElement(hashTable *table, char *key) {
 
     if (table == NULL || *table == NULL)
@@ -163,19 +189,29 @@ hashElement *getElement(hashTable *table, char *key) {
     }
 }
 
+/**
+ * Deletes an element in the hash table
+ * freeing its data and key.
+ *
+ * Unused at the moment.
+ *
+ * */
 int deleteElement(hashTable *table, char *key) {
 
     if (table == NULL || *table == NULL)
-        return HASH_SUCCESS;                                        //If the the table, or its elements are NULL then we cannot delete any element
+        return HASH_SUCCESS;                                //If the the table, or its elements are NULL then we cannot delete any element
 
     hashElement *currentElement;
     unsigned int hashNumber = badHash(key);
 
-    if (table[hashNumber] == NULL) return HASH_ERROR;       //We cannot detete an element that is not in the table
+    if (table[hashNumber] == NULL) return HASH_ERROR;       //We cannot delete an element that is not in the table
 
     if (strcmp((*table)[hashNumber]->key, key) == 0) {      //If we find the element in the first position
         currentElement = (*table)[hashNumber];
         (*table)[hashNumber] = currentElement->next;        //Its child will be now in the first position
+        if (currentElement->data != NULL)
+            free(currentElement->data);                     //We have chosen to delete the elements data when we delete the element itself if it's not set to NULL
+        free(currentElement->key);
         free(currentElement);                               //And we delete the element
         return HASH_SUCCESS;
     } else {                                                //If the element seems to be in the list
@@ -193,11 +229,11 @@ int deleteElement(hashTable *table, char *key) {
             parentElement = currentElement;                 //The parent now is the child of the old parent (current)
             currentElement = currentElement->next;          //The new current element is the son of the current element
         }
-        return HASH_ERROR;                  //If we can't find the element at all in the list then we cant delete it
+        return HASH_ERROR;                                  //If we can't find the element at all in the list then we cant delete it
     }
 }
 
-/*
+/**
  * This is just a debug function to show the status of the table
  *
  * We show data like the max length of a list, the total elements inserted, the positions with something in them
@@ -225,7 +261,6 @@ void printState(hashTable table) {
             nodesInCurList = 0;
             currentElement = table[i];
             while (currentElement != NULL) {
-                //printf("Current element: %s\n", currentElement->key);
                 nodesInCurList++;
                 currentElement = currentElement->next;
             }
@@ -249,7 +284,7 @@ void printState(hashTable table) {
 }
 
 
-/*
+/**
  * This function is also a debug function that we use for printing all the data in the table
  *
  * We iterate through all the positions and if is not NULL we print the key of the first element and all

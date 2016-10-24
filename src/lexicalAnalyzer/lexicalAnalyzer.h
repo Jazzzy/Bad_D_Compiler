@@ -25,7 +25,6 @@ typedef struct {
     readerSystem *mReaderSystem;
     symbolTable *mSymbolTable;
     listOfOperators *mListOfOperators;
-    unsigned int currentLine;
 } lexicalAnalyzer;
 
 

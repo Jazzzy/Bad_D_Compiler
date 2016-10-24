@@ -24,6 +24,9 @@ typedef struct {
     sentinelPointer end;
     blockOfData block0;
     blockOfData block1;
+    unsigned int currentLine;
+    unsigned int currentPosition;
+    unsigned int lengthOfCurrentLex;
 } readerSystem;
 
 
