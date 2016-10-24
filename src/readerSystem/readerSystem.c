@@ -41,13 +41,13 @@ void initReaderSystem(readerSystem **rs, char *filename) {
     (*rs)->currentPosition = 0;                         //Current position is 0 because we increase it when reading the first character.
     (*rs)->lengthOfCurrentLex = 0;
 
-#define UNIX
+//#define UNIX
 #ifdef UNIX
     struct stat st;                                     //We read the size of the blocks in the filesystem of the file
     stat(filename, &st);
     (*rs)->blockSize = (unsigned int) st.st_blksize;
 #else
-    (*rs)->blockSize = (unsigned int) 16;
+    (*rs)->blockSize = (unsigned int) 256;
 #endif
 
 
@@ -262,6 +262,8 @@ char *getCurrentLex(readerSystem *rs) {
     }
     rs->beg.block = rs->end.block;                                      //We se the beginning to be on the current end
     rs->beg.pointer = rs->end.pointer;                                  //And update the block too
+    rs->lengthOfCurrentLex = 0;                                         //We also need to update the length of the current lexeme to 0
+
 
     return lex;
 }

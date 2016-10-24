@@ -29,6 +29,9 @@ void printMessageFor(int code) {
         case ERR_BAD_BINARY:
             printf("Malformed binary number");
             break;
+        case ERR_LEXEME_TOO_LARGE:
+            printf("Lexeme size unsupported");
+            break;
 
         default:
             printf("No message for that code.");
