@@ -182,7 +182,7 @@ int readAllFromOperator(listOfOperators *mList, int position, char c) {
  * Returns the next lexical component found by the lexical analyzer.
  *
  * */
-int getNextLexicalComponent(lexicalAnalyzer *la) {
+lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
 
     readerSystem *rs = la->mReaderSystem;
 
@@ -190,294 +190,328 @@ int getNextLexicalComponent(lexicalAnalyzer *la) {
     char c = 0;
     int lexComp;
 
+    lexemeComponentPackage lcp;
+    lcp.lexeme = NULL;
+
     for (;;) {
+        for (;;) {
 
-        c = getNextChar(rs);                    //We get a character
+            c = getNextChar(rs);                    //We get a character
 
-        readEmptyData(la, &c);                  //After we read non useful data
+            readEmptyData(la, &c);                  //After we read non useful data
 
-        if (c == EOF)                           //If we have found the end of file we end the search.
-            return END_OF_FILE;                 //Return End Of File here
+            if (c == EOF) {                         //If we have found the end of file we end the search.
+                lcp.lexicalComponent = END_OF_FILE;
+                return lcp;                         //Return End Of File here
+            }
 
+            //-------------------------------------------------CHECKING FOR COMMENTS--------------------------------------------------
 
-        //-------------------------------------------------CHECKING FOR COMMENTS--------------------------------------------------
+            short checkedForComment = 0;
 
-        short checkedForComment = 0;
-
-        if (couldBeComment(c)) {                            //We could be at the beginning of a comment
-            c = getNextChar(rs);
-            checkedForComment = 1;
-            if (isBegOfNestedComment(c)) {                  //We are at the beginning of a nested comment
+            if (couldBeComment(c)) {                            //We could be at the beginning of a comment
                 c = getNextChar(rs);
-                readUntilEndOfNestedComment(la, &c);        //We read until we have finished the nested comment
-                char *lex = getCurrentLex(rs);              //We get the string that corresponds to the comment
-                returnChar(rs);
-#ifdef PRINT_LEXEM
-                printf("Detected comment: [%s]\n", lex);    //Print it
-#endif
-                free(lex);                                  //And here we free it but I'm not sure about what to do with it.
-                return NESTED_COMMENT;
-            } else if (isBegOfBlockComment(c)) {            //We are at the beginning of a block comment
-                c = getNextChar(rs);
-
-                if (isBegOfBlockComment(c)) {               //If we find another '*' then this could be a documentation comment.
+                checkedForComment = 1;
+                if (isBegOfNestedComment(c)) {                  //We are at the beginning of a nested comment
                     c = getNextChar(rs);
-                    if (couldBeComment(c)) {                //If we find a '/' then the comment is a normal block comment like this "/**/"
+                    readUntilEndOfNestedComment(la, &c);        //We read until we have finished the nested comment
+                    char *lex = getCurrentLex(rs);              //We get the string that corresponds to the comment
+                    returnChar(rs);
+#ifdef PRINT_LEXEM
+                    printf("Detected comment: [%s]\n", lex);    //Print it
+#endif
+                    free(lex);                                  //And here we free it.
+                    break;
+                    //return NESTED_COMMENT;
+                } else if (isBegOfBlockComment(c)) {            //We are at the beginning of a block comment
+                    c = getNextChar(rs);
+
+                    if (isBegOfBlockComment(c)) {               //If we find another '*' then this could be a documentation comment.
                         c = getNextChar(rs);
-                        char *lex = getCurrentLex(rs);
-                        returnChar(rs);
+                        if (couldBeComment(c)) {                //If we find a '/' then the comment is a normal block comment like this "/**/"
+                            c = getNextChar(rs);
+                            char *lex = getCurrentLex(rs);
+                            returnChar(rs);
 #ifdef PRINT_LEXEM
-                        printf("Detected comment: [%s]\n", lex);
+                            printf("Detected comment: [%s]\n", lex);
 #endif
-                        free(lex);
-                        return BLOCK_COMMENT;
-                    } else {                                //Else it is a documentation comment
-                        readUntilEndOfBlockComment(la, &c); //We read until the end of the comment
-                        char *lex = getCurrentLex(rs);
-                        returnChar(rs);
+                            free(lex);
+                            break;
+                            //return BLOCK_COMMENT;
+                        } else {                                //Else it is a documentation comment
+                            readUntilEndOfBlockComment(la, &c); //We read until the end of the comment
+                            char *lex = getCurrentLex(rs);
+                            returnChar(rs);
 #ifdef PRINT_LEXEM
-                        printf("Detected comment: [%s]\n", lex);
+                            printf("Detected documentation comment: [%s]\n", lex);
 #endif
-                        free(lex);
-                        return DOCUMENTATION_COMMENT;       //And return a different lexical component.
+                            free(lex);
+                            lcp.lexicalComponent = DOCUMENTATION_COMMENT;       //And return a different lexical component.
+                            return lcp;
+
+                        }
 
                     }
-
+                    readUntilEndOfBlockComment(la, &c);         //If we end up here is just a normal block comment with something inside it.
+                    char *lex = getCurrentLex(rs);              //We just to the same as above to get the lexeme, print it and return the lexical component.
+                    returnChar(rs);
+#ifdef PRINT_LEXEM
+                    printf("Detected comment: [%s]\n", lex);
+#endif
+                    free(lex);
+                    break;
+                    //return BLOCK_COMMENT;
+                } else if (isBegOfLineComment(c)) {             //If we have found "//" then this is a line comment
+                    c = getNextChar(rs);
+                    readUntilEndOfLineComment(la, &c);          //We read until the next line
+                    char *lex = getCurrentLex(rs);              //And repeat the steps above to return the correct lexical component.
+                    returnChar(rs);
+#ifdef PRINT_LEXEM
+                    printf("Detected comment: [%s]\n", lex);
+#endif
+                    free(lex);
+                    break;
+                    //return LINE_COMMENT;
                 }
-                readUntilEndOfBlockComment(la, &c);         //If we end up here is just a normal block comment with something inside it.
-                char *lex = getCurrentLex(rs);              //We just to the same as above to get the lexeme, print it and return the lexical component.
                 returnChar(rs);
-#ifdef PRINT_LEXEM
-                printf("Detected comment: [%s]\n", lex);
-#endif
-                free(lex);
-                return BLOCK_COMMENT;
-            } else if (isBegOfLineComment(c)) {             //If we have found "//" then this is a line comment
-                c = getNextChar(rs);
-                readUntilEndOfLineComment(la, &c);          //We read until the next line
-                char *lex = getCurrentLex(rs);              //And repeat the steps above to return the correct lexical component.
-                returnChar(rs);
-#ifdef PRINT_LEXEM
-                printf("Detected comment: [%s]\n", lex);
-#endif
-                free(lex);
-                return BLOCK_COMMENT;
             }
-            returnChar(rs);
-        }
 
-        //-------------------------------------------------CHECKING FOR OPERATORS--------------------------------------------------
+            //-------------------------------------------------CHECKING FOR OPERATORS--------------------------------------------------
 
-        int chkResult;
-        if (checkedForComment) {
-            chkResult = checkAllOperators(la->mListOfOperators, 0, '/');              //If the character can be the beginning of an operator
-        } else {
-            chkResult = checkAllOperators(la->mListOfOperators, 0, c);              //If the character can be the beginning of an operator
-        }
-        if (chkResult != 0) {
-            int position = 1;
-            c = getNextChar(rs);
-            chkResult = checkAllOperators(la->mListOfOperators, position, c);       //We test if the next char can be the next part of the operator
-            while (chkResult != 1) {                                                //And we test while we don't have only one operator
-                if (chkResult == 0) {                                               //If we have no operators possible then there is an error
+            int chkResult;
+            if (checkedForComment) {
+                chkResult = checkAllOperators(la->mListOfOperators, 0, '/');              //If the character can be the beginning of an operator
+            } else {
+                chkResult = checkAllOperators(la->mListOfOperators, 0, c);              //If the character can be the beginning of an operator
+            }
+            if (chkResult != 0) {
+                int position = 1;
+                c = getNextChar(rs);
+                chkResult = checkAllOperators(la->mListOfOperators, position, c);       //We test if the next char can be the next part of the operator
+                while (chkResult != 1) {                                                //And we test while we don't have only one operator
+                    if (chkResult == 0) {                                               //If we have no operators possible then there is an error
 
-                    manageNonFatalErrorWithLine(ERR_BAD_OPERATOR, "Found an error when parsing an operator", la->mReaderSystem->currentLine,
-                                                la->mReaderSystem->currentPosition);
+                        manageNonFatalErrorWithLine(ERR_BAD_OPERATOR, "Found an error when parsing an operator", la->mReaderSystem->currentLine,
+                                                    la->mReaderSystem->currentPosition);
+                        char *lex = getCurrentLex(rs);
+                        returnChar(rs);
+#ifdef PRINT_LEXEM
+                        printf("Detected lexem: [%s]\n", lex);
+#endif
+                        free(lex);
+                        resetListOfOperators(&(la->mListOfOperators));
+
+                        lcp.lexicalComponent = OPE_ERROR;
+                        return lcp;
+
+                    } else if (chkResult ==
+                               2) {                                    //If we have more than two operators possible we need to check more characters
+                        c = getNextChar(rs);
+                        position++;
+                        chkResult = checkAllOperators(la->mListOfOperators, position, c);
+                    }
+                }
+                //Here we already know the operator since it's only one option left
+
+                //But we need to read all of it's characters.
+                while (readAllFromOperator(la->mListOfOperators, position, c)) {    //So we keep reading and checking
+                    position++;
+                    c = getNextChar(rs);                                            //And getting the remaining characters
+                }
+                lexComp = getOnlyPossibleOperator(la->mListOfOperators);            //We get the lexical component of the only operator possible
+                char *lex = getCurrentLex(rs);                                      //Get the lexeme
+                returnChar(
+                        rs);                                                        //And return the last chat that was used for checking the end of the operator
+#ifdef PRINT_LEXEM
+                printf("Detected lexem: [%s]\n", lex);                              //Print it
+#endif
+                free(lex);                                                          //Free it
+                resetListOfOperators(
+                        &(la->mListOfOperators));                                   //Reset the operator list to make them all possible again for future iterations.
+                lcp.lexicalComponent = lexComp;                                     //And return the lexical component.
+                return lcp;
+            } else {
+                resetListOfOperators(&(la->mListOfOperators));                      //We need to reset the list of operators to set them all to possible again.
+            }
+
+
+
+            //-------------------------------------------------CHECKING FOR STRING LITERALS--------------------------------------------------
+
+
+            if (couldBeStrLit(c)) {                                                 //If this can be a string literal
+                c = getNextChar(rs);
+                if (c == EOF) {//ERROR CHECKING FOR END OF FILE
+                    manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "EOF found inside a string", la->mReaderSystem->currentLine,
+                                             la->mReaderSystem->currentPosition);
+                    lcp.lexicalComponent = COMPONENT_ERROR;
+                    return lcp;
+                }
+                while (!isEndOfString(c)) {                                         //While we don't find the closing character
+                    if (isScapeCharacter(c)) {                                      //If we find an scape character
+                        c = getNextChar(rs);                                        //The we get the next character to that and ignore it
+                        if (c == EOF) {//ERROR CHECKING FOR END OF FILE
+                            manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "EOF found inside a string", la->mReaderSystem->currentLine,
+                                                     la->mReaderSystem->currentPosition);
+                            lcp.lexicalComponent = COMPONENT_ERROR;
+                            return lcp;
+                        }
+                    }
+                    c = getNextChar(rs);                                            //We keep getting characters
+                    if (c == EOF) {//ERROR CHECKING FOR END OF FILE
+                        manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "EOF found inside a string", la->mReaderSystem->currentLine,
+                                                 la->mReaderSystem->currentPosition);
+                        lcp.lexicalComponent = COMPONENT_ERROR;
+                        return lcp;
+                    }
+                }
+                c = getNextChar(rs);
+                char *lex = getCurrentLex(rs);                                      //Get the lexeme
+                returnChar(rs);
+#ifdef PRINT_LEXEM
+                printf("Detected lexem: [%s]\n", lex);                              //Print it
+#endif
+                lcp.lexicalComponent = STRING_LITERAL;
+                lcp.lexeme = lex;
+                return lcp;
+
+            }
+
+            //-------------------------------------------------CHECKING FOR ALPHANUMERIC STRINGS--------------------------------------------------
+
+
+            if (couldBeIdent(c)) {                                                  //If this can be an alphanumeric string
+                while (isPartOfIdent(c)) {                                          //We get all the characters that can still be part of it
+                    c = getNextChar(rs);
+                }
+                char *lex = getCurrentLex(rs);                                      //We get the lexeme
+                returnChar(rs);
+#ifdef PRINT_LEXEM
+                printf("Detected lexem: [%s]\n", lex);                              //And print it
+#endif
+
+                symbolData *sd = searchLex(la->mSymbolTable, lex);
+                if (sd == NULL) {                                                   //We have found an identifier that was not on the table
+                    sd = (symbolData *) malloc(sizeof(symbolData));
+                    sd->lexicalComponent = IDENTIFIER;
+                    addLex(&(la->mSymbolTable), lex, sd);
+
+                } else {                                                            //There was already a reserved word or an identifier in the table.
+                    if (sd->lexicalComponent == IDENTIFIER) {                       //Identical identifier in the symbol table already
+                        free(lex);                                                  //The lexeme needs to be deleted since it is not going to the table.
+                        /**
+                         * We could use the code below if we wanted to allow duplicates on the symbol table
+                         * taking care of the level.
+                         *
+                         * */
+                        /*sd = (symbolData *) malloc(sizeof(symbolData));
+                        sd->lexicalComponent = IDENTIFIER;
+                        addLex(&(la->mSymbolTable), lex, sd);                       //We add it again, currently we will have repeated elements that are identical.*/
+                    } else {                                                        //If it is a reserved word
+                        free(lex);                                                  //We need to free the lexeme since we don't need the original string.
+                    }
+                    lcp.lexicalComponent = (sd->lexicalComponent);
+                    return lcp;
+                }
+
+                lcp.lexicalComponent = IDENTIFIER;
+                return lcp;
+            }
+
+
+            //-------------------------------------------------CHECKING FOR NUMERIC LITERALS--------------------------------------------------
+
+
+            if (couldBeNumber(c)) {                                             //If this is the start of a number
+                char cAux = c;
+                c = getNextChar(rs);
+                if (isBinFirst(cAux) && isBinPrefix(c)) {                       //We have read a binary number
+                    c = getNextChar(rs);
+                    if (c == EOF) {//ERROR CHECKING FOR END OF FILE
+                        manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "EOF found after incomplete definition of a binary number", la->mReaderSystem->currentLine,
+                                                 la->mReaderSystem->currentPosition);
+                        lcp.lexicalComponent = COMPONENT_ERROR;
+                        return lcp;
+                    }
+                    if (!isPartOfBinary(c)) {                                   //If it does not have a 0 or 1 after the definition then there is an error
+                        manageNonFatalErrorWithLine(ERR_BAD_BINARY, "Found incomplete definition of a binary number", la->mReaderSystem->currentLine,
+                                                    la->mReaderSystem->currentPosition);
+                        char *lex = getCurrentLex(rs);
+                        returnChar(rs);
+#ifdef PRINT_LEXEM
+                        printf("Error in: [%s]\n", lex);
+#endif
+                        lcp.lexicalComponent = COMPONENT_ERROR;
+                        return lcp;
+                    }
+                    while (isPartOfBinary(c)) {                                 //We read all 0s and 1s
+                        c = getNextChar(rs);
+                    }
+                    char *lex = getCurrentLex(rs);                              //And get the lexeme
+                    returnChar(rs);
+#ifdef PRINT_LEXEM
+                    printf("Detected lexem: [%s]\n", lex);
+#endif
+                    lcp.lexicalComponent = BINARY_LITERAL;
+                    lcp.lexeme = lex;
+                    return lcp;
+
+                } else if (!canBeInNumber(c)) {                 //If the number has a length of one then it is an integer
                     char *lex = getCurrentLex(rs);
                     returnChar(rs);
 #ifdef PRINT_LEXEM
                     printf("Detected lexem: [%s]\n", lex);
 #endif
-                    free(lex);
-                    resetListOfOperators(&(la->mListOfOperators));
-                    return OPE_ERROR;
+                    lcp.lexicalComponent = INTEGER_LITERAL;
+                    lcp.lexeme = lex;
+                    return lcp;
 
-                } else if (chkResult == 2) {                                    //If we have more than two operators possible we need to check more characters
-                    c = getNextChar(rs);
-                    position++;
-                    chkResult = checkAllOperators(la->mListOfOperators, position, c);
-                }
-            }
-            //Here we already know the operator since it's only one option left
-
-            //But we need to read all of it's characters.
-            while (readAllFromOperator(la->mListOfOperators, position, c)) {    //So we keep reading and checking
-                position++;
-                c = getNextChar(rs);                                            //And getting the remaining characters
-            }
-            lexComp = getOnlyPossibleOperator(la->mListOfOperators);            //We get the lexical component of the only operator possible
-            char *lex = getCurrentLex(rs);                                      //Get the lexeme
-            returnChar(rs);                                                     //And return the last chat that was used for checking the end of the operator
-#ifdef PRINT_LEXEM
-            printf("Detected lexem: [%s]\n", lex);                              //Print it
-#endif
-            free(lex);                                                          //Free it
-            resetListOfOperators(&(la->mListOfOperators));                      //Reset the operator list to make them all possible again for future iterations.
-            return lexComp;                                                     //And return the lexical component.
-        } else {
-            resetListOfOperators(&(la->mListOfOperators));                      //We need to reset the list of operators to set them all to possible again.
-        }
-
-
-
-        //-------------------------------------------------CHECKING FOR STRING LITERALS--------------------------------------------------
-
-
-        if (couldBeStrLit(c)) {                                                 //If this can be a string literal
-            c = getNextChar(rs);
-            if (c == EOF) {//ERROR CHECKING FOR END OF FILE
-                manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "EOF found inside a string", la->mReaderSystem->currentLine,
-                                         la->mReaderSystem->currentPosition);
-                return COMPONENT_ERROR;
-            }
-            while (!isEndOfString(c)) {                                         //While we don't find the closing character
-                if (isScapeCharacter(c)) {                                      //If we find an scape character
-                    c = getNextChar(rs);                                        //The we get the next character to that and ignore it
-                    if (c == EOF) {//ERROR CHECKING FOR END OF FILE
-                        manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "EOF found inside a string", la->mReaderSystem->currentLine,
-                                                 la->mReaderSystem->currentPosition);
-                        return COMPONENT_ERROR;
+                } else if (canBeInNumber(c)) {                  //The number is not binary and is longer than 2 characters
+                    int type = INTEGER_LITERAL;
+                    while (isPartOfNumber(c)) {                 //We read an array of numbers
+                        c = getNextChar(rs);
+                    }                                           //We have read the whole string of numbers but we could have a float or scientific notation.
+                    if (couldBeFloat(c)) {                      //We check if the number has a point.
+                        c = getNextChar(rs);                    //If this is a float we need to keep looking for all the numbers after the point
+                        while (isPartOfNumber(c)) {
+                            c = getNextChar(rs);
+                        }
+                        type = FLOAT_LITERAL;
                     }
-                }
-                c = getNextChar(rs);                                            //We keep getting characters
-                if (c == EOF) {//ERROR CHECKING FOR END OF FILE
-                    manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "EOF found inside a string", la->mReaderSystem->currentLine,
-                                             la->mReaderSystem->currentPosition);
-                    return COMPONENT_ERROR;
-                }
-            }
-            c = getNextChar(rs);
-            char *lex = getCurrentLex(rs);                                      //Get the lexeme
-            returnChar(rs);
-#ifdef PRINT_LEXEM
-            printf("Detected lexem: [%s]\n", lex);                              //Print it
-#endif
-            free(lex);                                                          //Free it
-            return STRING_LITERAL;
+
+                    if (couldBeSciNo(c)) {                      //Now we know we have either a float or an integer but we could find some scientific notation.
+                        c = getNextChar(rs);
+                        if (isPlusMinus(c)) {                   //The e or E can be followed by a plus or minus.
+                            c = getNextChar(rs);
+                        }
+                        if (c == EOF) {//ERROR CHECKING FOR END OF FILE
+                            manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "EOF found after incomplete definition of a number in scientific notation",
+                                                     la->mReaderSystem->currentLine,
+                                                     la->mReaderSystem->currentPosition);
+                            lcp.lexicalComponent = COMPONENT_ERROR;
+                            return lcp;
 
 
-        }
+                        }
+                        while (isPartOfNumber(c)) {             //And after that we can only have an array of numbers
+                            c = getNextChar(rs);
+                        }
+                    }
 
-        //-------------------------------------------------CHECKING FOR ALPHANUMERIC STRINGS--------------------------------------------------
-
-
-        if (couldBeIdent(c)) {                                                  //If this can be an alphanumeric string
-            while (isPartOfIdent(c)) {                                          //We get all the characters that can still be part of it
-                c = getNextChar(rs);
-            }
-            char *lex = getCurrentLex(rs);                                      //We get the lexeme
-            returnChar(rs);
-#ifdef PRINT_LEXEM
-            printf("Detected lexem: [%s]\n", lex);                              //And print it
-#endif
-
-            symbolData *sd = searchLex(la->mSymbolTable, lex);
-            if (sd == NULL) {                                                   //We have found an identifier that was not on the table
-                sd = (symbolData *) malloc(sizeof(symbolData));
-                sd->lexicalComponent = IDENTIFIER;
-                addLex(&(la->mSymbolTable), lex, sd);
-
-            } else {                                                            //There was already a reserved word or an identifier in the table.
-                if (sd->lexicalComponent == IDENTIFIER) {                       //Identical identifier in the symbol table already
-                    sd = (symbolData *) malloc(sizeof(symbolData));
-                    sd->lexicalComponent = IDENTIFIER;
-                    addLex(&(la->mSymbolTable), lex, sd);                       //We add it again, currently we will have repeated elements that are identical.
-                } else {                                                        //If it is a reserved word
-                    free(lex);                                                  //We need to free the lexeme since we don't need the original string.
-                }
-                return (sd->lexicalComponent);
-            }
-
-
-            return IDENTIFIER;
-        }
-
-
-        //-------------------------------------------------CHECKING FOR NUMERIC LITERALS--------------------------------------------------
-
-
-        if (couldBeNumber(c)) {                                             //If this is the start of a number
-            char cAux = c;
-            c = getNextChar(rs);
-            if (isBinFirst(cAux) && isBinPrefix(c)) {                       //We have read a binary number
-                c = getNextChar(rs);
-                if (c == EOF) {//ERROR CHECKING FOR END OF FILE
-                    manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "EOF found after incomplete definition of a binary number", la->mReaderSystem->currentLine,
-                                             la->mReaderSystem->currentPosition);
-                    return COMPONENT_ERROR;
-                }
-                if (!isPartOfBinary(c)) {                                   //If it does not have a 0 or 1 after the definition then there is an error
-                    manageNonFatalErrorWithLine(ERR_BAD_BINARY, "Found incomplete definition of a binary number", la->mReaderSystem->currentLine,
-                                                la->mReaderSystem->currentPosition);
                     char *lex = getCurrentLex(rs);
                     returnChar(rs);
 #ifdef PRINT_LEXEM
-                    printf("Error in: [%s]\n", lex);
+                    printf("Detected lexem: [%s]\n", lex);
 #endif
-                    free(lex);
-                    return COMPONENT_ERROR;
+                    lcp.lexicalComponent = type;
+                    lcp.lexeme = lex;
+                    return lcp;
+
                 }
-                while (isPartOfBinary(c)) {                                 //We read all 0s and 1s
-                    c = getNextChar(rs);
-                }
-                char *lex = getCurrentLex(rs);                              //And get the lexeme
-                returnChar(rs);
-#ifdef PRINT_LEXEM
-                printf("Detected lexem: [%s]\n", lex);
-#endif
-                free(lex);
-                return BINARY_LITERAL;
+            }//End of number checking
 
-            } else if (!canBeInNumber(c)) {                 //If the number has a length of one then it is an integer
-                char *lex = getCurrentLex(rs);
-                returnChar(rs);
-#ifdef PRINT_LEXEM
-                printf("Detected lexem: [%s]\n", lex);
-#endif
-                free(lex);
-                return INTEGER_LITERAL;
+            //Could continue here in order to check more things
 
-            } else if (canBeInNumber(c)) {                  //The number is not binary and is longer than 2 characters
-                int type = INTEGER_LITERAL;
-                while (isPartOfNumber(c)) {                 //We read an array of numbers
-                    c = getNextChar(rs);
-                }                                           //We have read the whole string of numbers but we could have a float or scientific notation.
-                if (couldBeFloat(c)) {                      //We check if the number has a point.
-                    c = getNextChar(rs);                    //If this is a float we need to keep looking for all the numbers after the point
-                    while (isPartOfNumber(c)) {
-                        c = getNextChar(rs);
-                    }
-                    type = FLOAT_LITERAL;
-                }
-
-                if (couldBeSciNo(c)) {                      //Now we know we have either a float or an integer but we could find some scientific notation.
-                    c = getNextChar(rs);
-                    if (isPlusMinus(c)) {                   //The e or E can be followed by a plus or minus.
-                        c = getNextChar(rs);
-                    }
-                    if (c == EOF) {//ERROR CHECKING FOR END OF FILE
-                        manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "EOF found after incomplete definition of a number in scientific notation",
-                                                 la->mReaderSystem->currentLine,
-                                                 la->mReaderSystem->currentPosition);
-                        return COMPONENT_ERROR;
-                    }
-                    while (isPartOfNumber(c)) {             //And after that we can only have an array of numbers
-                        c = getNextChar(rs);
-                    }
-                }
-
-                char *lex = getCurrentLex(rs);
-                returnChar(rs);
-#ifdef PRINT_LEXEM
-                printf("Detected lexem: [%s]\n", lex);
-#endif
-                free(lex);
-                return type;
-            }
-        }//End of number checking
-
-        //Could continue here in order to check more things
-
-
+        }
     }
 }

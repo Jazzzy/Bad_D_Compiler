@@ -9,6 +9,13 @@
 #include "../readerSystem/readerSystem.h"
 #include "../symbolTable/symbolTable.h"
 
+
+typedef struct {
+    int lexicalComponent;
+    char *lexeme;
+} lexemeComponentPackage;
+
+
 typedef struct {
     char str[4];
     int length;
@@ -30,7 +37,7 @@ typedef struct {
 
 void initLexicalAnalyzer(lexicalAnalyzer **la, readerSystem *rs, symbolTable *st, char *pathToDefine, char *pathToOperators);
 
-int getNextLexicalComponent(lexicalAnalyzer *la);
+lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la);
 
 void deleteLexicalAnalyzer(lexicalAnalyzer **la);
 

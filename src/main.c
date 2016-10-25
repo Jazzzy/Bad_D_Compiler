@@ -174,10 +174,15 @@ int main(int argc, char **argv) {
     global_la = la;
 
 
-    int lexComp = getNextLexicalComponent(la);
-    while (lexComp != END_OF_FILE) {
-        printf("Lexixal component detected: [%d]\n\n", lexComp);
-        lexComp = getNextLexicalComponent(la);
+    lexemeComponentPackage lcp = getNextLexicalComponent(la);
+    while (lcp.lexicalComponent != END_OF_FILE) {
+        if (lcp.lexeme != NULL) {
+            printf("Lexeme [%s] detected as the lexical component [%d]\n\n", lcp.lexeme, lcp.lexicalComponent);
+            free(lcp.lexeme);
+        } else {
+            printf("Lexical component detected [%d]\n\n", lcp.lexicalComponent);
+        }
+        lcp = getNextLexicalComponent(la);
     }
 
     printSymbolTable(st);
