@@ -25,6 +25,7 @@ typedef struct {
 
 typedef struct {            //More data could be added here, this will be the void *data inserted into the hast tables
     int lexicalComponent;
+    char *lexeme;
 } symbolData;
 
 

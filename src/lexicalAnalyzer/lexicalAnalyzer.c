@@ -127,7 +127,7 @@ short checkAllOperators(listOfOperators *mList, int position, char c) {
     } else {
         manageFatalError(ERR_BAD_OPERATOR,
                          "Possible operators are negative, this should never be possible, how did you get here?\n\tTell me at gladislacebrafeliz@gmail.com :)");
-        return COMPONENT_ERROR;
+        return -1;
     }
 }
 
@@ -175,7 +175,8 @@ int readAllFromOperator(listOfOperators *mList, int position, char c) {
     return -1;
 }
 
-#define PRINT_LEXEM
+
+#define SEND_LEXEM
 
 
 /**
@@ -245,7 +246,12 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
 #ifdef PRINT_LEXEM
                             printf("Detected documentation comment: [%s]\n", lex);
 #endif
+#ifdef SEND_LEXEM
+                            lcp.lexeme = lex;
+#else
                             free(lex);
+#endif
+
                             lcp.lexicalComponent = DOCUMENTATION_COMMENT;       //And return a different lexical component.
                             return lcp;
 
@@ -298,7 +304,11 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
 #ifdef PRINT_LEXEM
                         printf("Detected lexem: [%s]\n", lex);
 #endif
+#ifdef SEND_LEXEM
+                        lcp.lexeme = lex;
+#else
                         free(lex);
+#endif
                         resetListOfOperators(&(la->mListOfOperators));
 
                         lcp.lexicalComponent = OPE_ERROR;
@@ -325,7 +335,11 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
 #ifdef PRINT_LEXEM
                 printf("Detected lexem: [%s]\n", lex);                              //Print it
 #endif
-                free(lex);                                                          //Free it
+#ifdef SEND_LEXEM
+                lcp.lexeme = lex;
+#else
+                free(lex);
+#endif                                                       //Free it
                 resetListOfOperators(
                         &(la->mListOfOperators));                                   //Reset the operator list to make them all possible again for future iterations.
                 lcp.lexicalComponent = lexComp;                                     //And return the lexical component.
@@ -344,8 +358,6 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
                 if (c == EOF) {//ERROR CHECKING FOR END OF FILE
                     manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "EOF found inside a string", la->mReaderSystem->currentLine,
                                              la->mReaderSystem->currentPosition);
-                    lcp.lexicalComponent = COMPONENT_ERROR;
-                    return lcp;
                 }
                 while (!isEndOfString(c)) {                                         //While we don't find the closing character
                     if (isScapeCharacter(c)) {                                      //If we find an scape character
@@ -353,16 +365,13 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
                         if (c == EOF) {//ERROR CHECKING FOR END OF FILE
                             manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "EOF found inside a string", la->mReaderSystem->currentLine,
                                                      la->mReaderSystem->currentPosition);
-                            lcp.lexicalComponent = COMPONENT_ERROR;
-                            return lcp;
+
                         }
                     }
                     c = getNextChar(rs);                                            //We keep getting characters
                     if (c == EOF) {//ERROR CHECKING FOR END OF FILE
                         manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "EOF found inside a string", la->mReaderSystem->currentLine,
                                                  la->mReaderSystem->currentPosition);
-                        lcp.lexicalComponent = COMPONENT_ERROR;
-                        return lcp;
                     }
                 }
                 c = getNextChar(rs);
@@ -371,8 +380,12 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
 #ifdef PRINT_LEXEM
                 printf("Detected lexem: [%s]\n", lex);                              //Print it
 #endif
-                lcp.lexicalComponent = STRING_LITERAL;
+#ifdef SEND_LEXEM
                 lcp.lexeme = lex;
+#else
+                free(lex);
+#endif
+                lcp.lexicalComponent = STRING_LITERAL;
                 return lcp;
 
             }
@@ -394,11 +407,16 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
                 if (sd == NULL) {                                                   //We have found an identifier that was not on the table
                     sd = (symbolData *) malloc(sizeof(symbolData));
                     sd->lexicalComponent = IDENTIFIER;
+                    sd->lexeme = lex;
                     addLex(&(la->mSymbolTable), lex, sd);
+#ifdef SEND_LEXEM
+                    lcp.lexeme = lex;
+#else
+                    free(lex);
+#endif
 
                 } else {                                                            //There was already a reserved word or an identifier in the table.
                     if (sd->lexicalComponent == IDENTIFIER) {                       //Identical identifier in the symbol table already
-                        free(lex);                                                  //The lexeme needs to be deleted since it is not going to the table.
                         /**
                          * We could use the code below if we wanted to allow duplicates on the symbol table
                          * taking care of the level.
@@ -407,8 +425,23 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
                         /*sd = (symbolData *) malloc(sizeof(symbolData));
                         sd->lexicalComponent = IDENTIFIER;
                         addLex(&(la->mSymbolTable), lex, sd);                       //We add it again, currently we will have repeated elements that are identical.*/
+
+
+#ifdef SEND_LEXEM
+                        lcp.lexeme = sd->lexeme;
+                        free(lex);
+#else
+                        free(lex);                                                  //The lexeme needs to be deleted since it is not going to the table.
+#endif
+
+
                     } else {                                                        //If it is a reserved word
-                        free(lex);                                                  //We need to free the lexeme since we don't need the original string.
+#ifdef SEND_LEXEM
+                        lcp.lexeme = lex;
+#else
+                        free(lex);
+#endif
+
                     }
                     lcp.lexicalComponent = (sd->lexicalComponent);
                     return lcp;
@@ -430,8 +463,6 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
                     if (c == EOF) {//ERROR CHECKING FOR END OF FILE
                         manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "EOF found after incomplete definition of a binary number", la->mReaderSystem->currentLine,
                                                  la->mReaderSystem->currentPosition);
-                        lcp.lexicalComponent = COMPONENT_ERROR;
-                        return lcp;
                     }
                     if (!isPartOfBinary(c)) {                                   //If it does not have a 0 or 1 after the definition then there is an error
                         manageNonFatalErrorWithLine(ERR_BAD_BINARY, "Found incomplete definition of a binary number", la->mReaderSystem->currentLine,
@@ -440,6 +471,11 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
                         returnChar(rs);
 #ifdef PRINT_LEXEM
                         printf("Error in: [%s]\n", lex);
+#endif
+#ifdef SEND_LEXEM
+                        lcp.lexeme = lex;
+#else
+                        free(lex);
 #endif
                         lcp.lexicalComponent = COMPONENT_ERROR;
                         return lcp;
@@ -452,8 +488,12 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
 #ifdef PRINT_LEXEM
                     printf("Detected lexem: [%s]\n", lex);
 #endif
-                    lcp.lexicalComponent = BINARY_LITERAL;
+#ifdef SEND_LEXEM
                     lcp.lexeme = lex;
+#else
+                    free(lex);
+#endif
+                    lcp.lexicalComponent = BINARY_LITERAL;
                     return lcp;
 
                 } else if (!canBeInNumber(c)) {                 //If the number has a length of one then it is an integer
@@ -463,7 +503,11 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
                     printf("Detected lexem: [%s]\n", lex);
 #endif
                     lcp.lexicalComponent = INTEGER_LITERAL;
+#ifdef SEND_LEXEM
                     lcp.lexeme = lex;
+#else
+                    free(lex);
+#endif
                     return lcp;
 
                 } else if (canBeInNumber(c)) {                  //The number is not binary and is longer than 2 characters
@@ -488,14 +532,32 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
                             manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "EOF found after incomplete definition of a number in scientific notation",
                                                      la->mReaderSystem->currentLine,
                                                      la->mReaderSystem->currentPosition);
+                        }
+
+                        if (!isPartOfNumber(c)) {
+                            manageNonFatalErrorWithLine(ERR_BAD_SCI_NO, "Found incomplete definition of a scientific notation number",
+                                                        la->mReaderSystem->currentLine,
+                                                        la->mReaderSystem->currentPosition);
+                            char *lex = getCurrentLex(rs);
+                            returnChar(rs);
+#ifdef PRINT_LEXEM
+                            printf("Error in: [%s]\n", lex);
+#endif
+#ifdef SEND_LEXEM
+                            lcp.lexeme = lex;
+#else
+                            free(lex);
+#endif
                             lcp.lexicalComponent = COMPONENT_ERROR;
                             return lcp;
 
-
                         }
+
                         while (isPartOfNumber(c)) {             //And after that we can only have an array of numbers
                             c = getNextChar(rs);
                         }
+                        type = FLOAT_LITERAL;
+
                     }
 
                     char *lex = getCurrentLex(rs);
@@ -504,7 +566,11 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
                     printf("Detected lexem: [%s]\n", lex);
 #endif
                     lcp.lexicalComponent = type;
+#ifdef SEND_LEXEM
                     lcp.lexeme = lex;
+#else
+                    free(lex);
+#endif
                     return lcp;
 
                 }

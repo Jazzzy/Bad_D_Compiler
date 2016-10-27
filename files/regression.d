@@ -21,6 +21,7 @@ double beta1(double[] x, double[] y, double x_bar, double y_bar)
     return num / denom;
 }
 
+
 void main()
 {
     /+
@@ -45,3 +46,4 @@ void main()
     a = /+ "+/" +/ 1";
     a = /+ /* +/ *2/ 3;
 }
+

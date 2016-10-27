@@ -14,6 +14,7 @@
  * */
 unsigned int readNextBlock(readerSystem *rs, blockOfData *block) {
 
+
     //We read a block of data from the file
     unsigned int charsRead = (unsigned int) fread(block->pointer, sizeof(char), rs->blockSize, rs->file);
 
@@ -112,12 +113,10 @@ void advanceBeginning(readerSystem *rs) {
             (rs->beg.pointer == (rs->block1.pointer + rs->blockSize * sizeof(char)))) {     //We are on the end of the block
             //We are on one of our inserted EOF
             if (rs->beg.block == 1) {               //If we are on the block 1
-                readNextBlock(rs, &(rs->block0));   //We read the next block on block 0
                 rs->beg.block = 0;                  //We mark the block of the end pointer to be 0
                 rs->beg.pointer = rs->block0.pointer;   //We set the pointer to the beginning of the block
                 retChar = *(rs->end.pointer);           //We read the character at the beginning of the block
             } else if (rs->beg.block == 0) {        //If we are on block 0
-                readNextBlock(rs, &(rs->block1));   //Same as above but with block 1
                 rs->beg.block = 1;
                 rs->beg.pointer = rs->block1.pointer;
                 retChar = *(rs->end.pointer);
@@ -168,6 +167,7 @@ char getNextChar(readerSystem *rs) {
     }
 
     rs->lengthOfCurrentLex++;                       //The length of the lexeme will now be one char more.
+
 
     return retChar;
 

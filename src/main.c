@@ -130,18 +130,20 @@ symbolTable *global_st = NULL;
 readerSystem *global_rs = NULL;
 
 /*
- * We can compile this with :
+ * We can compile this with (in /src):
+
+gcc -Werror main.c utils/bHashTable.c utils/bHashTable.h symbolTable/symbolTable.c symbolTable/symbolTable.h readerSystem/readerSystem.c readerSystem/readerSystem.h lexicalAnalyzer/lexicalAnalyzer.c lexicalAnalyzer/lexicalAnalyzer.h DLang/D_DEFINE_RESERVED_WORDS.h utils/operatorParser.c utils/operatorParser.h utils/defineParser.c utils/defineParser.h lexicalAnalyzer/lexicalHelper.c lexicalAnalyzer/lexicalHelper.h DLang/D_DEFINE_NON_RESERVED_WORDS.h errorManager/errorManager.c errorManager/errorManager.h -o ../bin/bdc
 
 
-gcc main.c utils/bHashTable.c utils/bHashTable.h symbolTable/symbolTable.c symbolTable/symbolTable.h readerSystem/readerSystem.c readerSystem/readerSystem.h lexicalAnalyzer/lexicalAnalyzer.c lexicalAnalyzer/lexicalAnalyzer.h DLang/D_DEFINE_RESERVED_WORDS.h utils/operatorParser.c utils/operatorParser.h utils/defineParser.c utils/defineParser.h lexicalAnalyzer/lexicalHelper.c lexicalAnalyzer/lexicalHelper.h DLang/D_DEFINE_NON_RESERVED_WORDS.h errorManager/errorManager.c errorManager/errorManager.h -o ../bin/bdc
+ * And run it with (in /bin):
 
- *
+  ./bdc ./arguments/regression.d ./arguments/D_DEFINE_RESERVED_WORDS.h ./arguments/d.ope
+
+
  */
 
 
 int main(int argc, char **argv) {
-
-    //TODO: Get this paths from the list of arguments
 
     char *filename = "/home/jazzzy/GitProjects/Bad_D_Compiler/files/regression.d";
     char *pathToDefine = "/home/jazzzy/GitProjects/Bad_D_Compiler/src/DLang/D_DEFINE_RESERVED_WORDS.h";
@@ -177,10 +179,12 @@ int main(int argc, char **argv) {
     lexemeComponentPackage lcp = getNextLexicalComponent(la);
     while (lcp.lexicalComponent != END_OF_FILE) {
         if (lcp.lexeme != NULL) {
-            printf("Lexeme [%s] detected as the lexical component [%d]\n\n", lcp.lexeme, lcp.lexicalComponent);
-            free(lcp.lexeme);
+            printf("[%d]\t=>\t[%s]\n", lcp.lexicalComponent, lcp.lexeme);
+            if (lcp.lexicalComponent != IDENTIFIER) {
+                free(lcp.lexeme);
+            }
         } else {
-            printf("Lexical component detected [%d]\n\n", lcp.lexicalComponent);
+            printf("[%d]\n", lcp.lexicalComponent);
         }
         lcp = getNextLexicalComponent(la);
     }

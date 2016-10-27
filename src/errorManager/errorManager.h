@@ -10,7 +10,8 @@ typedef enum {
     ERR_BAD_OPERATOR,
     ERR_FILE_ERROR,
     ERR_BAD_BINARY,
-    ERR_LEXEME_TOO_LARGE
+    ERR_LEXEME_TOO_LARGE,
+    ERR_BAD_SCI_NO
 } errorType;
 
 
