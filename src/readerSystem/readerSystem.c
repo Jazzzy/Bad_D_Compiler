@@ -1,7 +1,3 @@
-//
-// Created by jazzzy on 10/18/16.
-//
-
 #include "readerSystem.h"
 #include "../errorManager/errorManager.h"
 #include <stdlib.h>
@@ -221,7 +217,7 @@ char *getCurrentLex(readerSystem *rs) {
     if (rs->beg.block == rs->end.block) {                               //If we are on the same block
         size = (rs->end.pointer - rs->beg.pointer) / sizeof(char);      //The size is the difference in the pointers
         lex = (char *) malloc((size + 1) * sizeof(char));               //Reserve the size + 1 for the null character.
-        for (i = 0; i < size; ++i) {                                    //Copy all the data
+        for (i = 0; i < (int) size; ++i) {                              //Copy all the data
             lex[i] = rs->beg.pointer[i];
         }
         lex[size] = '\0';                                               //And set the null character.
@@ -233,7 +229,7 @@ char *getCurrentLex(readerSystem *rs) {
             size = size1 + size2;                                       //The total size is the sum of the part used in block 1 and the part used in block 2
             lex = (char *) malloc((size + 1) * sizeof(char));           //Reserve the size like above
             int j = 0;
-            for (i = 0; i < size1; ++i) {                               //And copy all the data from the first block
+            for (i = 0; i < (int) size1; ++i) {                         //And copy all the data from the first block
                 lex[j] = rs->beg.pointer[i];
                 j++;
             }
@@ -249,7 +245,7 @@ char *getCurrentLex(readerSystem *rs) {
             size = size1 + size2;
             lex = (char *) malloc((size + 1) * sizeof(char));
             int j = 0;
-            for (i = 0; i < size1; ++i) {
+            for (i = 0; i < (int) size1; ++i) {
                 lex[j] = rs->beg.pointer[i];
                 j++;
             }

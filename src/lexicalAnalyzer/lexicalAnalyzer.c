@@ -1,7 +1,3 @@
-//
-// Created by jazzzy on 10/21/16.
-//
-
 #include "lexicalAnalyzer.h"
 #include <stdlib.h>
 #include "../DLang/D_DEFINE_RESERVED_WORDS.h"
@@ -43,6 +39,8 @@ void resetListOfOperators(listOfOperators **mList) {
     for (i = 0; i < (*mList)->length; i++) {
         (*mList)->list[i].isPossible = 1;
     }
+    (*mList)->startPosition = 0;
+    (*mList)->numPossible = (*mList)->length;
 }
 
 /**
@@ -51,7 +49,7 @@ void resetListOfOperators(listOfOperators **mList) {
  * rs and st need to be init already.
  *
  * */
-void initLexicalAnalyzer(lexicalAnalyzer **la, readerSystem *rs, symbolTable *st, char *pathToDefine, char *pathToOperators) {
+void initLexicalAnalyzer(lexicalAnalyzer **la, readerSystem *rs, symbolTable *st, char *pathToOperators) {
     *la = (lexicalAnalyzer *) malloc(sizeof(lexicalAnalyzer));
     (*la)->mReaderSystem = rs;
     (*la)->mSymbolTable = st;
@@ -92,37 +90,62 @@ short detectOperator(operator *anOperator, int position, char c) {
     return toReturn;
 }
 
+
+/**
+ * This function checks what operators are still possible for the character that has been read.
+ *
+ * Before this version, this iterator through all the list but now when we find the first operator
+ * we just mark that as the next position to start. In the next call we start over there and we read
+ * only the amount of operators that start with the first character for the operator read.
+ *
+ * What this means is that the first time we would have to check for all the operators on the list but
+ * after that iteration we will do only 3 or 4 iterations per call.
+ *
+ * */
 short checkAllOperators(listOfOperators *mList, int position, char c) {
     int i;
     int numOfPosOp = 0;                                                     //Number of possible operators found
-    int maxLength = 0;
+    //int maxLength = 0; //Use this in case we wanted to chech the max length found for a possible operator.
+    int first = 1;
 
-    for (i = 0; i < (*mList).length; i++) {
+    int limit = (*mList).startPosition + (*mList).numPossible;
+
+    for (i = (*mList).startPosition; i < limit; i++) {
         if ((*mList).list[i].isPossible == 1) {                             //If that operator is still possible
             if (detectOperator(&(*mList).list[i], position, c) == 1) {      //If that operator is still valid
-
                 if ((*mList).list[i].length >= position) {
-                    maxLength = (*mList).list[i].length;                    //This is the longest operator
+                    /*
+                     * If we find a possible operator for the first time then we start looking there the next time.
+                     *
+                     *
+                     * */
+                    if (first && position == 0) {
+                        mList->startPosition = i;
+                        first = 0;
+                    }
+                    //maxLength = (*mList).list[i].length;                  //This is the longest operator
                     numOfPosOp++;
                 } else if ((*mList).list[i].length < position) {
                     (*mList).list[i].isPossible = 0;                        //We have found a longer operator
                 }
-
-
             } else {
                 (*mList).list[i].isPossible = 0;
             }
         }
     }
 
+    if (numOfPosOp > 0 && position == 0) {
+        (*mList).numPossible = numOfPosOp;
+    }
+
     if (numOfPosOp == 0) {
-        //printf("We don't have any operator that is possible with this data.\n");
+        //We don't have any operator that is possible with this data.
         return 0;
     } else if (numOfPosOp == 1) {
-        //printf("We have found one operator possible\n");
+        //We have found one operator possible
         return 1;
     } else if (numOfPosOp > 1) {
-        //printf("Various operators are possible.\n");
+        //Various operators are possible
         return 2;
     } else {
         manageFatalError(ERR_BAD_OPERATOR,
@@ -282,17 +305,85 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
                 returnChar(rs);
             }
 
+            //---------------------------------CHECKING FOR SPECIAL CASE OF FLOAT STARTING WITH A DOT---------------------------------
+
+
+            short checkedForFloat = 0;
+            if (couldBeFloat(c)) {
+                c = getNextChar(rs);
+
+                if (isPartOfNumber(c)) {
+                    while (isPartOfNumber(c)) {
+                        c = getNextChar(rs);
+                    }
+
+                    if (couldBeSciNo(c)) {                      //Now we know we have either a float or an integer but we could find some scientific notation.
+                        c = getNextChar(rs);
+                        if (isPlusMinus(c)) {                   //The e or E can be followed by a plus or minus.
+                            c = getNextChar(rs);
+                        }
+                        if (c == EOF) {//ERROR CHECKING FOR END OF FILE
+                            manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "EOF found after incomplete definition of a number in scientific notation",
+                                                     la->mReaderSystem->currentLine,
+                                                     la->mReaderSystem->currentPosition);
+                        }
+
+                        if (!isPartOfNumber(c)) {
+                            manageNonFatalErrorWithLine(ERR_BAD_SCI_NO, "Found incomplete definition of a scientific notation number",
+                                                        la->mReaderSystem->currentLine,
+                                                        la->mReaderSystem->currentPosition);
+                            char *lex = getCurrentLex(rs);
+                            returnChar(rs);
+#ifdef PRINT_LEXEM
+                            printf("Error in: [%s]\n", lex);
+#endif
+#ifdef SEND_LEXEM
+                            lcp.lexeme = lex;
+#else
+                            free(lex);
+#endif
+                            lcp.lexicalComponent = COMPONENT_ERROR;
+                            return lcp;
+
+                        }
+                        while (isPartOfNumber(c)) {             //And after that we can only have an array of numbers
+                            c = getNextChar(rs);
+                        }
+                    }
+
+                    char *lex = getCurrentLex(rs);
+                    returnChar(rs);
+#ifdef PRINT_LEXEM
+                    printf("Detected lexem: [%s]\n", lex);
+#endif
+                    lcp.lexicalComponent = FLOAT_LITERAL;
+#ifdef SEND_LEXEM
+                    lcp.lexeme = lex;
+#else
+                    free(lex);
+#endif
+                    return lcp;
+
+                } else {
+                    checkedForFloat = 1;
+                }
+            }
+
+
             //-------------------------------------------------CHECKING FOR OPERATORS--------------------------------------------------
 
             int chkResult;
             if (checkedForComment) {
-                chkResult = checkAllOperators(la->mListOfOperators, 0, '/');              //If the character can be the beginning of an operator
+                chkResult = checkAllOperators(la->mListOfOperators, 0, '/');            //If the character can be the beginning of an operator
+            } else if (checkedForFloat) {
+                chkResult = checkAllOperators(la->mListOfOperators, 0, '.');            //If the character can be the beginning of an operator
             } else {
                 chkResult = checkAllOperators(la->mListOfOperators, 0, c);              //If the character can be the beginning of an operator
             }
             if (chkResult != 0) {
                 int position = 1;
-                c = getNextChar(rs);
+                if (!checkedForFloat)                                                   //If we have checked for a floating number with a point at the beginning
+                    c = getNextChar(rs);                                                //We dont need this next character, we have already read it
                 chkResult = checkAllOperators(la->mListOfOperators, position, c);       //We test if the next char can be the next part of the operator
                 while (chkResult != 1) {                                                //And we test while we don't have only one operator
                     if (chkResult == 0) {                                               //If we have no operators possible then there is an error
@@ -314,8 +405,7 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
                         lcp.lexicalComponent = OPE_ERROR;
                         return lcp;
 
-                    } else if (chkResult ==
-                               2) {                                    //If we have more than two operators possible we need to check more characters
+                    } else if (chkResult == 2) {                                    //If we have more than two operators possible we need to check more
                         c = getNextChar(rs);
                         position++;
                         chkResult = checkAllOperators(la->mListOfOperators, position, c);
@@ -359,6 +449,12 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
                     manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "EOF found inside a string", la->mReaderSystem->currentLine,
                                              la->mReaderSystem->currentPosition);
                 }
+
+                if (isNewLine(c)) {//ERROR CHECKING FOR NEWLINE
+                    manageNonFatalErrorWithLine(ERR_JUMP_LINE_IN_LITERAL, "Newline character found inside a string", la->mReaderSystem->currentLine,
+                                                la->mReaderSystem->currentPosition);
+                }
+
                 while (!isEndOfString(c)) {                                         //While we don't find the closing character
                     if (isScapeCharacter(c)) {                                      //If we find an scape character
                         c = getNextChar(rs);                                        //The we get the next character to that and ignore it
@@ -372,6 +468,10 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
                     if (c == EOF) {//ERROR CHECKING FOR END OF FILE
                         manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "EOF found inside a string", la->mReaderSystem->currentLine,
                                                  la->mReaderSystem->currentPosition);
+                    }
+                    if (isNewLine(c)) {//ERROR CHECKING FOR NEWLINE
+                        manageNonFatalErrorWithLine(ERR_JUMP_LINE_IN_LITERAL, "Newline character found inside a string", la->mReaderSystem->currentLine,
+                                                    la->mReaderSystem->currentPosition);
                     }
                 }
                 c = getNextChar(rs);

@@ -1,7 +1,3 @@
-//
-// Created by jazzzy on 10/21/16.
-//
-
 #ifndef BDC_LEXICALANALYZER_H
 #define BDC_LEXICALANALYZER_H
 
@@ -26,6 +22,8 @@ typedef struct {
 typedef struct {
     operator *list;
     int length;
+    int startPosition;
+    int numPossible;
 } listOfOperators;
 
 typedef struct {
@@ -35,7 +33,7 @@ typedef struct {
 } lexicalAnalyzer;
 
 
-void initLexicalAnalyzer(lexicalAnalyzer **la, readerSystem *rs, symbolTable *st, char *pathToDefine, char *pathToOperators);
+void initLexicalAnalyzer(lexicalAnalyzer **la, readerSystem *rs, symbolTable *st, char *pathToOperators);
 
 lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la);
 

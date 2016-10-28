@@ -1,7 +1,3 @@
-//
-// Created by jazzzy on 10/23/16.
-//
-
 #ifndef BDC_ERRORMANAGER_H
 #define BDC_ERRORMANAGER_H
 
@@ -11,7 +7,8 @@ typedef enum {
     ERR_FILE_ERROR,
     ERR_BAD_BINARY,
     ERR_LEXEME_TOO_LARGE,
-    ERR_BAD_SCI_NO
+    ERR_BAD_SCI_NO,
+    ERR_JUMP_LINE_IN_LITERAL
 } errorType;
 
 

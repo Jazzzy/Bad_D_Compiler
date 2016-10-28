@@ -9,3 +9,5 @@ set(SOURCE_FILES main.c utils/bHashTable.c utils/bHashTable.h symbolTable/symbol
 
 add_executable(bdc ${SOURCE_FILES})
 
+
+

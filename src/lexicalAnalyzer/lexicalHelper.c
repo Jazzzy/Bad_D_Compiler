@@ -1,7 +1,3 @@
-//
-// Created by jazzzy on 10/23/16.
-//
-
 #include "lexicalHelper.h"
 #include "lexicalAnalyzer.h"
 #include "../errorManager/errorManager.h"
@@ -192,3 +188,6 @@ short isBegOfLineComment(char c) {
     return (c == '/');
 }
 
+short isNewLine(char c){
+    return (c == '\n');
+}

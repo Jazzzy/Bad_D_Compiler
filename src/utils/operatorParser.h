@@ -1,7 +1,3 @@
-//
-// Created by jazzzy on 10/22/16.
-//
-
 #ifndef BDC_OPERATORPARSER_H
 #define BDC_OPERATORPARSER_H
 

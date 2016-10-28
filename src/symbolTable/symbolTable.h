@@ -1,7 +1,3 @@
-//
-// Created by jazzzy on 10/16/16.
-//
-
 #include "../utils/bHashTable.h"
 
 #ifndef BDC_SYMBOLTABLE_H

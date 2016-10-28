@@ -1,9 +1,6 @@
-//
-// Created by jazzzy on 10/22/16.
-//
-
 #include "operatorParser.h"
 #include "../errorManager/errorManager.h"
+#include "../lexicalAnalyzer/lexicalAnalyzer.h"
 #include <stdlib.h>
 
 void parseOperators(listOfOperators **mList, char *pathToOperators) {
@@ -25,6 +22,8 @@ void parseOperators(listOfOperators **mList, char *pathToOperators) {
 
 
     (*mList)->length = length;
+    (*mList)->startPosition = 0;
+    (*mList)->numPossible = length;
     (*mList)->list = (operator *) malloc(sizeof(operator) * (*mList)->length);
 
     i = 0;

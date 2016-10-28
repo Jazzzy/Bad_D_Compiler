@@ -1,7 +1,3 @@
-//
-// Created by jazzzy on 10/18/16.
-//
-
 #ifndef BDC_READERSYSTEM_H
 #define BDC_READERSYSTEM_H
 

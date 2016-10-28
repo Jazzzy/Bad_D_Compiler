@@ -1,7 +1,3 @@
-//
-// Created by jazzzy on 10/23/16.
-//
-
 #include <stdlib.h>
 #include <stdio.h>
 #include "errorManager.h"
@@ -34,6 +30,9 @@ void printMessageFor(int code) {
             break;
         case ERR_LEXEME_TOO_LARGE:
             printf("Lexeme size unsupported");
+            break;
+        case ERR_JUMP_LINE_IN_LITERAL:
+            printf("Found a jump line inside a literal");
             break;
 
         default:

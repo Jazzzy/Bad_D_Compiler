@@ -129,18 +129,6 @@ lexicalAnalyzer *global_la = NULL;
 symbolTable *global_st = NULL;
 readerSystem *global_rs = NULL;
 
-/*
- * We can compile this with (in /src):
-
-gcc -Werror main.c utils/bHashTable.c utils/bHashTable.h symbolTable/symbolTable.c symbolTable/symbolTable.h readerSystem/readerSystem.c readerSystem/readerSystem.h lexicalAnalyzer/lexicalAnalyzer.c lexicalAnalyzer/lexicalAnalyzer.h DLang/D_DEFINE_RESERVED_WORDS.h utils/operatorParser.c utils/operatorParser.h utils/defineParser.c utils/defineParser.h lexicalAnalyzer/lexicalHelper.c lexicalAnalyzer/lexicalHelper.h DLang/D_DEFINE_NON_RESERVED_WORDS.h errorManager/errorManager.c errorManager/errorManager.h -o ../bin/bdc
-
-
- * And run it with (in /bin):
-
-  ./bdc ./arguments/regression.d ./arguments/D_DEFINE_RESERVED_WORDS.h ./arguments/d.ope
-
-
- */
 
 
 int main(int argc, char **argv) {
@@ -172,7 +160,7 @@ int main(int argc, char **argv) {
 
     //Init the lexical analyzer
     lexicalAnalyzer *la = NULL;
-    initLexicalAnalyzer(&la, rs, st, pathToDefine, pathToOperators);
+    initLexicalAnalyzer(&la, rs, st, pathToOperators);
     global_la = la;
 
 

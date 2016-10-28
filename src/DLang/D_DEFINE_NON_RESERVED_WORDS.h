@@ -1,7 +1,3 @@
-//
-// Created by jazzzy on 10/23/16.
-//
-
 #ifndef BDC_D_DEFINE_NON_RESERVED_WORDS_H
 #define BDC_D_DEFINE_NON_RESERVED_WORDS_H
 

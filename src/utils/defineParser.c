@@ -1,7 +1,3 @@
-//
-// Created by jazzzy on 10/22/16.
-//
-
 #include <stdio.h>
 #include "defineParser.h"
 #include "../symbolTable/symbolTable.h"
@@ -31,7 +27,7 @@ void parseReservedWords(symbolTable **oSymbolTable, char *pathToDefineFile) {
 
 
         char *key = (char *) malloc((strlen(resWordBuf) + 1) * sizeof(char));
-        int i = 0;
+        unsigned int i = 0;
         for (i = 0; i < strlen(resWordBuf); i++) {
             key[i] = resWordBuf[i];
         }

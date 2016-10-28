@@ -1,4 +1,3 @@
-
 #ifndef BDC_BHASHTABLE_H
 #define BDC_BHASHTABLE_H
 

@@ -1,7 +1,3 @@
-//
-// Created by jazzzy on 10/23/16.
-//
-
 #ifndef BDC_LEXICALHELPER_H
 #define BDC_LEXICALHELPER_H
 
@@ -13,7 +9,6 @@ void readEmptyData(lexicalAnalyzer *la, char *c);
 short couldBeIdent(char c);
 
 short isPartOfIdent(char c);
-
 
 short couldBeNumber(char c);
 
@@ -52,5 +47,7 @@ short readUntilEndOfNestedComment(lexicalAnalyzer *la, char *c);
 short readUntilEndOfBlockComment(lexicalAnalyzer *la, char *c);
 
 short readUntilEndOfLineComment(lexicalAnalyzer *la, char *c);
+
+short isNewLine(char c);
 
 #endif //BDC_LEXICALHELPER_H
