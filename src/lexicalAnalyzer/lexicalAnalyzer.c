@@ -664,6 +664,9 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
                             c = getNextChar(rs);
                         }
                         type = FLOAT_LITERAL;
+#ifdef SEND_DEBUG_DATA
+                        sprintf(lcp.strLexicalComponent, "FLOAT_LITERAL");
+#endif
 
                     }
 
