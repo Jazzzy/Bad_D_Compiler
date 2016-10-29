@@ -60,10 +60,10 @@ int addLex(symbolTable **oSymbolTable, char *lex, symbolData *data) {           
 void printSymbolTable(symbolTable *oSymbolTable) {
     printf("\n\n----------------PRINTING STATE AND DATA OF THE RESERVED WORDS TABLE----------------\n\n");
     printState(*oSymbolTable->reserved);
-    printData(*oSymbolTable->reserved);
+    printDataSorted(*oSymbolTable->reserved);
 
     printf("\n\n----------------PRINTING STATE AND DATA OF THE IDENTIFIERS TABLE----------------\n\n");
     printState(*oSymbolTable->identifiers);
-    printData(*oSymbolTable->identifiers);
+    printDataSorted(*oSymbolTable->identifiers);
 
 }

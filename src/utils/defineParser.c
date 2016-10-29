@@ -34,6 +34,8 @@ void parseReservedWords(symbolTable **oSymbolTable, char *pathToDefineFile) {
 
         symbolData *msymbolData = (symbolData *) malloc(sizeof(symbolData));
         msymbolData->lexicalComponent = LexCompBuf;
+
+
         addElement(((*oSymbolTable)->reserved), key, (void *) msymbolData);
     }
 

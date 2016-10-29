@@ -35,5 +35,7 @@ void printState(hashTable table);
 
 void printData(hashTable table);
 
+void printDataSorted(hashTable table);
+
 
 #endif //BDC_BHASHTABLE_H

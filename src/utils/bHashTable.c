@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "bHashTable.h"
+#include "../utils/colours.h"
 
 //---------------------HASH FUNCTION-------------------------
 #define FNV1_32_INIT ((u_int32_t)0x811c9dc5)
@@ -119,6 +120,7 @@ hashElement *addElement(hashTable *table, char *key, void *data) {
     hashElement *newElement, *oldElement;
     newElement = (hashElement *) malloc(sizeof(hashElement));   //Locate memory for the new element to be added
 
+    newElement->data = NULL;
 
     //Uncomment the next line if you want to copy the key instead of just using the one that is given.
     //#define HASHTABLE_COPYKEY
@@ -310,5 +312,79 @@ void printData(hashTable table) {
             printf("\n");
         }
     }
+}
+
+/**
+ * A function used to call strcmp fir sorting all
+ * the words inside the hashtable.
+ *
+ * */
+int stringCmp(const void *a, const void *b) {
+    const char **ia = (const char **) a;
+    const char **ib = (const char **) b;
+    return strcmp(*ia, *ib);
+}
+
+/**
+ * Same as the function above but printing in alphabetical order.
+ *
+ * */
+void printDataSorted(hashTable table) {
+
+    char **vectorOfStrings;                             //Our vector fo strings that will contain all keys from the hashtable.
+
+    if (table == NULL)
+        return;                                         //If the the table is NULL then we cannot print it.
+
+    int i;
+    hashElement *currentElement;
+    printf("\n\nPRINTING TABLE DATA (sorted):\n\n");
+    int numOfElements = 0;
+
+
+    for (i = 0; i < TABLESIZE; i++) {                   //First we read the number of elements
+        if (table[i] != NULL) {
+            currentElement = table[i];
+            numOfElements++;
+            currentElement = currentElement->next;
+            while (currentElement != NULL) {
+                numOfElements++;
+                currentElement = currentElement->next;
+            }
+        }
+    }
+
+    vectorOfStrings = (char **) malloc(((size_t) numOfElements) * sizeof(char *));
+
+    int j = 0;                                          //Now we save all elements inside our array
+    for (i = 0; i < TABLESIZE; i++) {
+        if (table[i] != NULL) {
+            currentElement = table[i];
+            vectorOfStrings[j] = (char *) malloc((strlen(currentElement->key) + 1));    //Reserve memory for the word
+            strcpy(vectorOfStrings[j], currentElement->key);                            //Copy it
+            j++;
+            currentElement = currentElement->next;
+            while (currentElement != NULL) {                                            //Do this also for the sons of the elements
+                if (currentElement->key != NULL && currentElement->data != NULL) {
+                    vectorOfStrings[j] = (char *) malloc((strlen(currentElement->key) + 1));
+                    strcpy(vectorOfStrings[j], currentElement->key);
+                    j++;
+                    currentElement = currentElement->next;
+                } else {
+                    break;
+                }
+            }
+        }
+    }
+
+    qsort(vectorOfStrings, (size_t) numOfElements, sizeof(char *), stringCmp);          //Call a fast quicksort to sort all elements using the function above.
+
+
+    for (i = 0; i < numOfElements; i++) {                                               //And we print all elements
+        printf("\tElement %3d:\t=>\t[" CYN "%s" RESET "]\n", i, vectorOfStrings[i]);
+        free(vectorOfStrings[i]);                                                       //While we free em
+    }
+    free(vectorOfStrings);                                                              //Finally we free the whole vector of strings.
+
 
 }
