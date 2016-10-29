@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include "defineParser.h"
-#include "../symbolTable/symbolTable.h"
 #include "../errorManager/errorManager.h"
 #include <stdlib.h>
 #include <string.h>

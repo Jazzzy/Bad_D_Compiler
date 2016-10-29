@@ -3,6 +3,8 @@
 #include "symbolTable.h"
 #include "../utils/defineParser.h"
 
+extern symbolTable *global_st;
+
 /**
  * Initializes the symbol table and reserves memory for all its data
  * including the hash tables
@@ -11,9 +13,9 @@
 void initSymbolTable(symbolTable **oSymbolTable, char *pathToDefineFile) {
     *oSymbolTable = (symbolTable *) malloc(
             sizeof(symbolTable));                                   //We reserve memory for the struct of the symbol table
+    global_st = *oSymbolTable;                                      //Update the global pointer for the error manager
     initHashTable(&((*oSymbolTable)->identifiers));                 //And for both hash tables we use
     initHashTable(&((*oSymbolTable)->reserved));
-
 
     parseReservedWords(oSymbolTable, pathToDefineFile);             //We parse the reserved words from a file with the parser.
 

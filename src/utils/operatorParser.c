@@ -1,6 +1,5 @@
 #include "operatorParser.h"
 #include "../errorManager/errorManager.h"
-#include "../lexicalAnalyzer/lexicalAnalyzer.h"
 #include <stdlib.h>
 
 void parseOperators(listOfOperators **mList, char *pathToOperators) {
@@ -36,7 +35,7 @@ void parseOperators(listOfOperators **mList, char *pathToOperators) {
         sscanf(line, "%d %[^ ] %d\n", &opeLength, opeString, &opeLexComp);
 
 #ifdef __clang__
-        if(opeLength==0) opeLength=4;       //For some reason we can't read the number 4 when compiling with clang
+        if(opeLength==0) opeLength=4;       //For some reason we can't read the number 4 when compiling with clang and using valgrind for memory leak testing
 #endif
 
         (*mList)->list[i].isPossible = 1;

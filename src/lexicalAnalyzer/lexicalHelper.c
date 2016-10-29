@@ -1,25 +1,23 @@
 #include "lexicalHelper.h"
-#include "lexicalAnalyzer.h"
 #include "../errorManager/errorManager.h"
-#include "../readerSystem/readerSystem.h"
 #include <ctype.h>
-#include <stdio.h>
 
 short notRelevantChar(char c) {
     return (isspace(c) || c == EOF);
 }
 
+/**
+ * Reads what is considered not relevant data in this program
+ * and updates the beg pointer in the reader system.
+ *
+ * */
 void readEmptyData(lexicalAnalyzer *la, char *c) {
 
     while (notRelevantChar(*c)) {
-        switch (*c) {                                           //Use this in case we want to consider data like tabs or newlines.
-            /*case '\n':
-                la->currentLine++;                              //We update the number of line.
-                //printf("\n\nLINE [%d]\n\n", la->currentLine);
-                break;*/
+        /*switch (*c) {                                           //Use this in case we want to consider data like tabs or newlines.
             default:
                 break;
-        }
+        }*/
         if (*c == EOF) {
             return;
         }
@@ -31,6 +29,12 @@ void readEmptyData(lexicalAnalyzer *la, char *c) {
 
 }
 
+
+/**
+ *
+ * Reads data until the end of a nested comment, calling itself when another nested comment is found
+ *
+ * */
 short readUntilEndOfNestedComment(lexicalAnalyzer *la, char *c) {
 
 
@@ -67,6 +71,11 @@ short readUntilEndOfNestedComment(lexicalAnalyzer *la, char *c) {
 
 }
 
+/**
+ *
+ * Reads data until the end of a block comment
+ *
+ * */
 short readUntilEndOfBlockComment(lexicalAnalyzer *la, char *c) {
 
     for (;;) {
@@ -95,21 +104,20 @@ short readUntilEndOfBlockComment(lexicalAnalyzer *la, char *c) {
 
 }
 
+/**
+ * Reads data until the end of a line comment
+ *
+ * */
 short readUntilEndOfLineComment(lexicalAnalyzer *la, char *c) {
 
     for (;;) {
-
         if (*c == EOF) {
             return 1;
         }
-
         if (*c == '\n') {
-            //*c = getNextChar(la->mReaderSystem);
             return 1;
         }
-
         *c = getNextChar(la->mReaderSystem);
-
     }
 }
 

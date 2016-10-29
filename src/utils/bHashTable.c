@@ -245,7 +245,9 @@ void printState(hashTable table) {
     double average;
     hashElement *currentElement;
 
-    maxLength = totalElements = usedSlots = nodesInCurList = 0;
+    maxLength = 0;
+    totalElements = 0;
+    usedSlots = 0;
     average = 0.0f;
 
     printf("\n\nPRINTING TABLE STATUS:\n\n");

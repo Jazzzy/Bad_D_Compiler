@@ -1,24 +1,13 @@
 #include "lexicalAnalyzer.h"
 #include <stdlib.h>
-#include "../DLang/D_DEFINE_RESERVED_WORDS.h"
 #include "../DLang/D_DEFINE_NON_RESERVED_WORDS.h"
 #include "../utils/operatorParser.h"
 #include "lexicalHelper.h"
-#include "../symbolTable/symbolTable.h"
 #include "../errorManager/errorManager.h"
+#include <string.h>
 
+extern lexicalAnalyzer *global_la;
 
-/*
- *
- * TODO: QUESTIONS:
- *
- *  -What should we do with number and string literals? Store them?
- *  -What should we do with comments, ignore them or send them?
- *  -Should we insert an identifier in the symbol table when we see it more than once?
- *  -Do we need an explicit syntactical analyzer or can it be in the main?
- *
- *
- * */
 
 /**
  * Saves memory for the operators and calls the parser to fill the data.
@@ -26,6 +15,7 @@
  * */
 void initOperators(listOfOperators **mList, char *pathToOperators) {
     *mList = (listOfOperators *) malloc(sizeof(listOfOperators));
+    (*mList)->list = NULL;
     parseOperators(mList, pathToOperators);
 }
 
@@ -51,9 +41,11 @@ void resetListOfOperators(listOfOperators **mList) {
  * */
 void initLexicalAnalyzer(lexicalAnalyzer **la, readerSystem *rs, symbolTable *st, char *pathToOperators) {
     *la = (lexicalAnalyzer *) malloc(sizeof(lexicalAnalyzer));
+    global_la = *la;                                            //We update the pointer to the lexical analyzer in case we need it in error management.
     (*la)->mReaderSystem = rs;
     (*la)->mSymbolTable = st;
-    initOperators(&(*la)->mListOfOperators, pathToOperators);
+    (*la)->mListOfOperators = NULL;
+    initOperators(&(*la)->mListOfOperators, pathToOperators);   //And we initialize the list of operators from the file.
 }
 
 /**
@@ -61,8 +53,10 @@ void initLexicalAnalyzer(lexicalAnalyzer **la, readerSystem *rs, symbolTable *st
  *
  * */
 void deleteOperators(listOfOperators **mList) {
-    free((*mList)->list);
-    free(*mList);
+    if ((*mList)->list != NULL)
+        free((*mList)->list);
+    if (*mList != NULL)
+        free(*mList);
 }
 
 /**
@@ -85,9 +79,7 @@ void deleteLexicalAnalyzer(lexicalAnalyzer **la) {
  *
  * */
 short detectOperator(operator *anOperator, int position, char c) {
-    short toReturn;
-    toReturn = anOperator->length <= position || (anOperator->str[position] == c);
-    return toReturn;
+    return anOperator->length <= position || (anOperator->str[position] == c);;
 }
 
 
@@ -105,7 +97,7 @@ short detectOperator(operator *anOperator, int position, char c) {
 short checkAllOperators(listOfOperators *mList, int position, char c) {
     int i;
     int numOfPosOp = 0;                                                     //Number of possible operators found
-    //int maxLength = 0; //Use this in case we wanted to chech the max length found for a possible operator.
+    //int maxLength = 0;            //Use this in case we wanted to check the max length found for a possible operator.
     int first = 1;
 
     int limit = (*mList).startPosition + (*mList).numPossible;
@@ -149,17 +141,9 @@ short checkAllOperators(listOfOperators *mList, int position, char c) {
         return 2;
     } else {
         manageFatalError(ERR_BAD_OPERATOR,
-                         "Possible operators are negative, this should never be possible, how did you get here?\n\tTell me at gladislacebrafeliz@gmail.com :)");
+                         "Possible operators are negative, this should never be possible, how did you get here?\n\tTell me if you can contact me, I can't put my name in here :)");
         return -1;
     }
-}
-
-/**
- * Returns TRUE if the character found is the beginning of an operator.
- *
- * */
-short couldBeOperator(listOfOperators *mList, char c) {
-    return (checkAllOperators(mList, 0, c) != 0);
 }
 
 /**
@@ -198,8 +182,8 @@ int readAllFromOperator(listOfOperators *mList, int position, char c) {
     return -1;
 }
 
-
-#define SEND_LEXEM
+//Define this in order to send the lexeme to the syntactical analyzer
+#define SEND_DEBUG_DATA
 
 
 /**
@@ -269,8 +253,9 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
 #ifdef PRINT_LEXEM
                             printf("Detected documentation comment: [%s]\n", lex);
 #endif
-#ifdef SEND_LEXEM
+#ifdef SEND_DEBUG_DATA
                             lcp.lexeme = lex;
+                            sprintf(lcp.strLexicalComponent, "DOCUMENTATION_COMMENT");
 #else
                             free(lex);
 #endif
@@ -337,8 +322,9 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
 #ifdef PRINT_LEXEM
                             printf("Error in: [%s]\n", lex);
 #endif
-#ifdef SEND_LEXEM
+#ifdef SEND_DEBUG_DATA
                             lcp.lexeme = lex;
+                            sprintf(lcp.strLexicalComponent, "COMPONENT_ERROR");
 #else
                             free(lex);
 #endif
@@ -357,8 +343,9 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
                     printf("Detected lexem: [%s]\n", lex);
 #endif
                     lcp.lexicalComponent = FLOAT_LITERAL;
-#ifdef SEND_LEXEM
+#ifdef SEND_DEBUG_DATA
                     lcp.lexeme = lex;
+                    sprintf(lcp.strLexicalComponent, "FLOAT_LITERAL");
 #else
                     free(lex);
 #endif
@@ -395,8 +382,9 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
 #ifdef PRINT_LEXEM
                         printf("Detected lexem: [%s]\n", lex);
 #endif
-#ifdef SEND_LEXEM
+#ifdef SEND_DEBUG_DATA
                         lcp.lexeme = lex;
+                        sprintf(lcp.strLexicalComponent, "OPE_ERROR");
 #else
                         free(lex);
 #endif
@@ -425,8 +413,10 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
 #ifdef PRINT_LEXEM
                 printf("Detected lexem: [%s]\n", lex);                              //Print it
 #endif
-#ifdef SEND_LEXEM
+#ifdef SEND_DEBUG_DATA
                 lcp.lexeme = lex;
+                sprintf(lcp.strLexicalComponent, "OPERATOR: %s", lex);
+                //We don't print the name because we can't know the string here without too much hustle.
 #else
                 free(lex);
 #endif                                                       //Free it
@@ -480,8 +470,10 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
 #ifdef PRINT_LEXEM
                 printf("Detected lexem: [%s]\n", lex);                              //Print it
 #endif
-#ifdef SEND_LEXEM
+#ifdef SEND_DEBUG_DATA
                 lcp.lexeme = lex;
+                sprintf(lcp.strLexicalComponent, "STRING_LITERAL");
+
 #else
                 free(lex);
 #endif
@@ -509,8 +501,9 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
                     sd->lexicalComponent = IDENTIFIER;
                     sd->lexeme = lex;
                     addLex(&(la->mSymbolTable), lex, sd);
-#ifdef SEND_LEXEM
+#ifdef SEND_DEBUG_DATA
                     lcp.lexeme = lex;
+                    sprintf(lcp.strLexicalComponent, "IDENTIFIER");
 #else
                     free(lex);
 #endif
@@ -527,17 +520,19 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
                         addLex(&(la->mSymbolTable), lex, sd);                       //We add it again, currently we will have repeated elements that are identical.*/
 
 
-#ifdef SEND_LEXEM
+#ifdef SEND_DEBUG_DATA
                         lcp.lexeme = sd->lexeme;
                         free(lex);
+                        sprintf(lcp.strLexicalComponent, "IDENTIFIER");
 #else
                         free(lex);                                                  //The lexeme needs to be deleted since it is not going to the table.
 #endif
 
 
                     } else {                                                        //If it is a reserved word
-#ifdef SEND_LEXEM
+#ifdef SEND_DEBUG_DATA
                         lcp.lexeme = lex;
+                        sprintf(lcp.strLexicalComponent, "RESERVED_WORD: %s", lex);
 #else
                         free(lex);
 #endif
@@ -572,8 +567,9 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
 #ifdef PRINT_LEXEM
                         printf("Error in: [%s]\n", lex);
 #endif
-#ifdef SEND_LEXEM
+#ifdef SEND_DEBUG_DATA
                         lcp.lexeme = lex;
+                        sprintf(lcp.strLexicalComponent, "COMPONENT_ERROR");
 #else
                         free(lex);
 #endif
@@ -588,8 +584,9 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
 #ifdef PRINT_LEXEM
                     printf("Detected lexem: [%s]\n", lex);
 #endif
-#ifdef SEND_LEXEM
+#ifdef SEND_DEBUG_DATA
                     lcp.lexeme = lex;
+                    sprintf(lcp.strLexicalComponent, "BINARY_LITERAL");
 #else
                     free(lex);
 #endif
@@ -603,8 +600,9 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
                     printf("Detected lexem: [%s]\n", lex);
 #endif
                     lcp.lexicalComponent = INTEGER_LITERAL;
-#ifdef SEND_LEXEM
+#ifdef SEND_DEBUG_DATA
                     lcp.lexeme = lex;
+                    sprintf(lcp.strLexicalComponent, "INTEGER_LITERAL");
 #else
                     free(lex);
 #endif
@@ -612,6 +610,11 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
 
                 } else if (canBeInNumber(c)) {                  //The number is not binary and is longer than 2 characters
                     int type = INTEGER_LITERAL;
+
+#ifdef SEND_DEBUG_DATA
+                    sprintf(lcp.strLexicalComponent, "INTEGER_LITERAL");
+#endif
+
                     while (isPartOfNumber(c)) {                 //We read an array of numbers
                         c = getNextChar(rs);
                     }                                           //We have read the whole string of numbers but we could have a float or scientific notation.
@@ -621,6 +624,9 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
                             c = getNextChar(rs);
                         }
                         type = FLOAT_LITERAL;
+#ifdef SEND_DEBUG_DATA
+                        sprintf(lcp.strLexicalComponent, "FLOAT_LITERAL");
+#endif
                     }
 
                     if (couldBeSciNo(c)) {                      //Now we know we have either a float or an integer but we could find some scientific notation.
@@ -643,8 +649,9 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
 #ifdef PRINT_LEXEM
                             printf("Error in: [%s]\n", lex);
 #endif
-#ifdef SEND_LEXEM
+#ifdef SEND_DEBUG_DATA
                             lcp.lexeme = lex;
+                            sprintf(lcp.strLexicalComponent, "COMPONENT_ERROR");
 #else
                             free(lex);
 #endif
@@ -666,7 +673,7 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
                     printf("Detected lexem: [%s]\n", lex);
 #endif
                     lcp.lexicalComponent = type;
-#ifdef SEND_LEXEM
+#ifdef SEND_DEBUG_DATA
                     lcp.lexeme = lex;
 #else
                     free(lex);

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "errorManager.h"
 #include "../lexicalAnalyzer/lexicalAnalyzer.h"
+#include "../utils/colours.h"
 
 extern lexicalAnalyzer *global_la;
 extern symbolTable *global_st;
@@ -34,7 +35,6 @@ void printMessageFor(int code) {
         case ERR_JUMP_LINE_IN_LITERAL:
             printf("Found a jump line inside a literal");
             break;
-
         default:
             printf("No message for that code.");
             break;
@@ -49,11 +49,15 @@ void printMessageFor(int code) {
  * */
 void manageFatalErrorWithLine(int code, char *message, int line, int position) {
 
-    printf("ERROR CODE [%d]: ", code);
-    printMessageFor(code);
-    printf("\n\t%s\n\thappened at line %d, in position %d\n\n", message, line, position);
+    printf(RED "ERROR CODE [%d]: ", code);              //Print the error code
+    printMessageFor(code);                              //Print the message associated
+    printf("\n\t%s\n\thappened at line %d, in position %d\n\n"RESET, message, line, position);   //And the line and position that had the error
 
 
+    /*
+     * In all the error manager functions we try to delete the core parts of the compiler if
+     * they are initialized in order to free all memory used.
+     * */
     if (global_la != NULL)
         deleteLexicalAnalyzer(&global_la);
     if (global_st != NULL)
@@ -74,9 +78,9 @@ void manageFatalErrorWithLine(int code, char *message, int line, int position) {
  * */
 void manageFatalError(int code, char *message) {
 
-    printf("ERROR CODE [%d]: ", code);
+    printf(RED"ERROR CODE [%d]: ", code);
     printMessageFor(code);
-    printf("\n\t%s\n\n", message);
+    printf("\n\t%s\n\n"RESET, message);
 
 
     if (global_la != NULL)
@@ -98,9 +102,9 @@ void manageFatalError(int code, char *message) {
  * */
 void manageNonFatalErrorWithLine(int code, char *message, int line, int position) {
 
-    printf("ERROR CODE [%d]: ", code);
+    printf(RED"ERROR CODE [%d]: ", code);
     printMessageFor(code);
-    printf("\n\t%s\n\thappened at line %d, in position %d\n\n", message, line, position);
+    printf("\n\t%s\n\thappened at line %d, in position %d\n\n"RESET, message, line, position);
 
     return;
 }
@@ -113,9 +117,9 @@ void manageNonFatalErrorWithLine(int code, char *message, int line, int position
  * */
 void manageNonFatalError(int code, char *message) {
 
-    printf("ERROR CODE [%d]: ", code);
+    printf(RED"ERROR CODE [%d]: ", code);
     printMessageFor(code);
-    printf("\n\t%s\n\n", message);
+    printf("\n\t%s\n\n"RESET, message);
 
     return;
 

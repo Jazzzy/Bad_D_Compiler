@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 
+
+extern readerSystem *global_rs;
+
 /**
  * We read the next block of data from the file, setting the final position to EOF
  *
@@ -28,15 +31,23 @@ unsigned int readNextBlock(readerSystem *rs, blockOfData *block) {
  * */
 void initReaderSystem(readerSystem **rs, char *filename) {
     *rs = (readerSystem *) malloc(sizeof(readerSystem));//Reserve size for the struct that defines the reader system
-    (*rs)->file = fopen(filename, "r");                 //We open the file itself
-    if ((*rs)->file == NULL) {                          //We check if we have the file opened.
-        //THROW ERROR
-        return;
-    }
-
+    global_rs = *rs;                                    //Update the global pointer for the error manager
     (*rs)->currentLine = 1;                             //Current line is 1
     (*rs)->currentPosition = 0;                         //Current position is 0 because we increase it when reading the first character.
     (*rs)->lengthOfCurrentLex = 0;
+    (*rs)->block0.pointer = NULL;
+    (*rs)->block1.pointer = NULL;
+    (*rs)->beg.pointer = NULL;
+    (*rs)->end.pointer = NULL;
+
+    (*rs)->file = fopen(filename, "r");                 //We open the file itself
+    if ((*rs)->file == NULL) {                          //We check if we have the file opened.
+        char buffer[256];
+        sprintf(buffer, "Error opening file: %s\n", filename);
+        manageFatalError(ERR_FILE_ERROR, buffer);
+    }
+
+
 
 //#define UNIX
 #ifdef UNIX
@@ -51,14 +62,14 @@ void initReaderSystem(readerSystem **rs, char *filename) {
     (*rs)->block0.pointer = (char *) malloc(sizeof(char) * ((*rs)->blockSize + 1)); //Save memory for the blocks and the EOFs
     (*rs)->block1.pointer = (char *) malloc(sizeof(char) * ((*rs)->blockSize + 1));
 
-    if (readNextBlock(*rs, &((*rs)->block0)) >= (*rs)->blockSize) { //If the first block is full
-        //readNextBlock(*rs, &((*rs)->block1));                       //Then we could fill the next one
+    if (readNextBlock(*rs, &((*rs)->block0)) >= (*rs)->blockSize) {     //If the first block is full
+        //readNextBlock(*rs, &((*rs)->block1));                         //Then we could fill the next one
     }
 
     (*rs)->beg.pointer = ((*rs)->block0.pointer);
-    (*rs)->end.pointer = ((*rs)->block0.pointer) - sizeof(char);    //End pointer starts before the beginning of the first block.
+    (*rs)->end.pointer = ((*rs)->block0.pointer) - sizeof(char);        //End pointer starts before the beginning of the first block.
 
-    (*rs)->beg.block = 0;                           //And both are in the first block
+    (*rs)->beg.block = 0;                                               //And both are in the first block
     (*rs)->end.block = 0;
 
     return;
@@ -70,7 +81,7 @@ void initReaderSystem(readerSystem **rs, char *filename) {
  * */
 void deleteBlock(blockOfData *block) {
 
-    if (block == NULL) {
+    if ((block)->pointer == NULL) {
         return;
     }
 
@@ -86,10 +97,12 @@ void deleteReaderSystem(readerSystem **rs) {
 
     deleteBlock(&((*rs)->block0));
     deleteBlock(&((*rs)->block1));
-    if (fclose((*rs)->file) != 0) {
-        //THROW ERROR
-        return;
-    }
+    if ((*rs)->file != NULL)
+        if (fclose((*rs)->file) != 0) {
+            char buffer[256];
+            sprintf(buffer, "Error closing source file\n");
+            manageNonFatalError(ERR_FILE_ERROR, buffer);
+        }
     free(*rs);
 
     return;
@@ -111,11 +124,9 @@ void advanceBeginning(readerSystem *rs) {
             if (rs->beg.block == 1) {               //If we are on the block 1
                 rs->beg.block = 0;                  //We mark the block of the end pointer to be 0
                 rs->beg.pointer = rs->block0.pointer;   //We set the pointer to the beginning of the block
-                retChar = *(rs->end.pointer);           //We read the character at the beginning of the block
             } else if (rs->beg.block == 0) {        //If we are on block 0
                 rs->beg.block = 1;
                 rs->beg.pointer = rs->block1.pointer;
-                retChar = *(rs->end.pointer);
             }
         } else { //We have found the true EOF
             return;

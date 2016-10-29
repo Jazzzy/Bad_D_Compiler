@@ -6,7 +6,6 @@ typedef enum {
 } returnType;
 
 
-#define MAXKEYLENGTH 100
 #define TABLESIZE 10009
 
 typedef struct hashElement hashElement;
@@ -26,7 +25,7 @@ int deleteHastTable(hashTable **table);
 
 unsigned int badHash(char *key);
 
-hashElement *addElement(hashTable *table, char *key, void *data); //TODO: Make sure if we should allow duplicates or not
+hashElement *addElement(hashTable *table, char *key, void *data);
 
 hashElement *getElement(hashTable *table, char *key);
 

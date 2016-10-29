@@ -9,6 +9,7 @@
 typedef struct {
     int lexicalComponent;
     char *lexeme;
+    char strLexicalComponent[50];   //Added this for visibility while debugging
 } lexemeComponentPackage;
 
 
