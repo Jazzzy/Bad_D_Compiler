@@ -196,6 +196,12 @@ SciNo [Ee][+-]?{Digit}+
 	while(*yptr)
 		*array_buf_ptr++ = *yptr++;
 					}
+
+<<EOF>>		{
+			addChars();
+			manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "Found end of file inside a literal string", numLine, numCharacter);
+			}
+
 }
 
 
