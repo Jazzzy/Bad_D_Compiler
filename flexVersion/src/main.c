@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
 
     //Init the lexical analyzer
     lexicalAnalyzer *la = NULL;
-    //initLexicalAnalyzer(&la, rs, st, pathToOperators);
+    initLexicalAnalyzer(&la, rs, st);
     global_la = la;
 
 
@@ -49,12 +49,10 @@ int main(int argc, char **argv) {
     while (lcp.lexicalComponent != END_OF_FILE) {
         if (lcp.lexeme != NULL) {
             printf("[ " BLU "%s" RESET " ]\n\t[" GRN "%d" RESET "]\t=>\t[" CYN "%s" RESET "]\n\n", lcp.strLexicalComponent, lcp.lexicalComponent, lcp.lexeme);
-            if (lcp.lexicalComponent != IDENTIFIER) {
-                free(lcp.lexeme);
-            }
         } else {
             printf("[%d]\n", lcp.lexicalComponent);
         }
+        free(lcp.lexeme);
         lcp = getNextLexicalComponent(la);
     }
 

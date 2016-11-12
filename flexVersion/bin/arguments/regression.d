@@ -5,6 +5,7 @@ import std.exception;
 
 double beta1(double[] x, double[] y, double x_bar, double y_bar)
 {
+
     /**
         Calculates the slope parameter for the linear regression of 'y' wrt 'x'
     */

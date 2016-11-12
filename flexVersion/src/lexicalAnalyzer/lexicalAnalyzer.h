@@ -14,27 +14,12 @@ typedef struct {
 
 
 typedef struct {
-    char str[4];
-    int length;
-    unsigned int lexicalComponent;
-    short isPossible;
-} operator;
-
-typedef struct {
-    operator *list;
-    int length;
-    int startPosition;
-    int numPossible;
-} listOfOperators;
-
-typedef struct {
     readerSystem *mReaderSystem;
     symbolTable *mSymbolTable;
-    listOfOperators *mListOfOperators;
 } lexicalAnalyzer;
 
 
-void initLexicalAnalyzer(lexicalAnalyzer **la, readerSystem *rs, symbolTable *st, char *pathToOperators);
+void initLexicalAnalyzer(lexicalAnalyzer **la, readerSystem *rs, symbolTable *st);
 
 lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la);
 

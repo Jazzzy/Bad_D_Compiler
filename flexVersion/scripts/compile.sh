@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
-cd ../bin
+cd ../src/lexicalAnalyzer/flex/
+flex d.lex
+cd ../../../bin
 cmake ../src/
 make

@@ -7,7 +7,7 @@
 #define BOOL 407 //## bool
 #define BREAK 408 //## break
 #define BYTE 409 //## byte
-#define CASE 410 //## CASE
+#define CASE 410 //## case
 #define CAST 411 //## cast
 #define CATCH 412 //## catch
 #define CDOUBLE 413 //## cdouble
@@ -31,7 +31,7 @@
 #define EXPORT 431 //## export
 #define EXTERN 432 //## extern
 #define FALSE 433 //## false
-#define FINAL 434 //## FINAL
+#define FINAL 434 //## final
 #define FINALLY 435 //## finally
 #define FLOAT 436 //## float
 #define FOR 437 //## for

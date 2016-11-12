@@ -5,37 +5,40 @@
 %{
 
 
-//#include "../../DLang/D_DEFINE_NON_RESERVED_WORDS.h"
+#include "../../DLang/D_DEFINE_NON_RESERVED_WORDS.h"
+#include "../../symbolTable/symbolTable.h"
 
-#define MAX_STR_CONST 512
+extern symbolTable *global_st;
 
-int numLinea = 1,numCharacter=0;
+#define MAX_STR_CONST 1024
 
+int numLine = 1,numCharacter=0;
 
-char string_buf[MAX_STR_CONST];
-char *string_buf_ptr;
+char array_buf[MAX_STR_CONST];
+char *array_buf_ptr;
+
+void addChars();
+void readBlockComment();
+void readNestedComment(short first);
+void updateWith(char c);
 
 %}
 
   /*--------------DEFINITIONS--------------*/
 
-%x CommentMODE
-
 %x StringMODE
 
 Character .
 
-WhiteSpace [:blank:]
+WhiteSpace [ \t\v\n\f]
 
 BegOfBlockComment "/*"
 
-EndOfBlockComment "*/"
+BegOfDocumentationComment "/**"[^/]
 
 BegOfNestedComment "/+"
 
-EndOfNestedComment "+/"
-
-BegOfLineComment "/*"
+BegOfLineComment "//"
 
 StringDelimiter \"
 
@@ -45,23 +48,100 @@ IdentifierChar [[:digit:][:alpha:]_]
 
 Identifier {IdentifierStart}{IdentifierChar}*
 
+CharacterLiteral \'(.|\\n|\\t|\\r|\\b|\\f|\\a|\\v)\'
+
+Digit [0-9]
+
+SciNo [Ee][+-]?{Digit}+
 
 
 %%		
 
   /*-----------------RULES-----------------*/
+	
+	/*COMMENTS*/
 
-{WhiteSpace}	
+{BegOfBlockComment}	{
+					readBlockComment();
+					}
+
+{BegOfDocumentationComment}	{
+					readBlockComment();
+					return(DOCUMENTATION_COMMENT);
+					}
+
+
+{BegOfLineComment}.*\n {addChars();}
+
+{BegOfNestedComment}	{
+						readNestedComment(1);
+						}
+
+	/*IDENTIFIERS OR RESERVED WORDS*/
 
 {Identifier}    {
+				//Comprobar si puede ser una palabra reservada.
+				addChars();
 
-				printf("Detectado identificador! %s\n", yytext);
+				symbolData *sd = searchLex(global_st, yytext);
 
+				if (sd == NULL) {
+					sd = (symbolData *) malloc(sizeof(symbolData));
+                    sd->lexicalComponent = IDENTIFIER;
+                    sd->lexeme = (char *) malloc((strlen(yytext) + 1) * sizeof(char));
+                    strcpy(sd->lexeme,yytext);
+					addLex(&global_st, sd->lexeme, sd);
+                    return(IDENTIFIER);
+				}else{
+					if (sd->lexicalComponent == IDENTIFIER) {
+						return(IDENTIFIER);
+					}else{
+						return(sd->lexicalComponent);
+					}
 				}
+
+
+				
+				}
+
+	/*INTEGER LITERALS*/
+
+{Digit}({Digit}|_)* 	{
+						addChars();
+						//printf("Integer Literal: %s\n", yytext);
+						return(INTEGER_LITERAL);
+						}
+
+	/*BINARY LITERALS*/
+
+0(b|B)(0|1|_)+		{
+					addChars();
+					//printf("Binary Literal: %s\n", yytext);
+					return(BINARY_LITERAL);
+					}
+
+	/*FLOATING LITERALS*/
+
+{Digit}*"."{Digit}+({SciNo})?		|
+{Digit}+("."{Digit}*)?({SciNo})?	{
+									addChars();
+									return(FLOAT_LITERAL);
+									}
+
+
+	/*SINGLE CHARACTER LITERALS*/
+
+{CharacterLiteral} {
+					addChars();
+					//printf("Character Literal: %s\n", yytext);
+					return (CHARACTER_LITERAL);			
+					}
+
+	/*STRING LITERALS*/
 	
 {StringDelimiter}	{ 
-					printf("Empezamos a leer string\n", yytext);
-					string_buf_ptr= string_buf;
+					//printf("Empezamos a leer string\n", yytext);
+					array_buf_ptr= array_buf;
 					BEGIN(StringMODE);
 					}
 
@@ -69,52 +149,260 @@ Identifier {IdentifierStart}{IdentifierChar}*
 
 {StringDelimiter} {
 					BEGIN(INITIAL);
-					*string_buf_ptr= '\0';
-					printf("Acabamos: %s\n", string_buf);
+					*array_buf_ptr= '\0';
+					addChars();
+					//printf("Acabamos: %s\n", array_buf);
+					return(STRING_LITERAL);
 					}
 
-\n 		{
-					printf("ERROR: barraene en una string!");
-
+\n 					{
+					addChars();
+					manageNonFatalErrorWithLine(ERR_JUMP_LINE_IN_LITERAL, "Found a jump line character inside a string literal", numLine, numCharacter);
 					}
 
-\\n *string_buf_ptr++ = '\n';
+\\n 	{
+		addChars();
+		*array_buf_ptr++ = '\n';
+		}
 
-\\t *string_buf_ptr++ = '\t';
 
-\\r *string_buf_ptr++ = '\r';
+\\t 	{
+		addChars();
+		*array_buf_ptr++ = '\t';
+		}
 
-\\b *string_buf_ptr++ = '\b';
+\\r 	{
+		addChars();
+		*array_buf_ptr++ = '\r';
+		}
 
-\\f *string_buf_ptr++ = '\f';
+\\b 	{
+		addChars();
+		*array_buf_ptr++ = '\b';
+		}
 
-\\(.|\n) *string_buf_ptr++ = yytext[1];
+\\f 	{
+		addChars();
+		*array_buf_ptr++ = '\f';
+		}
 
-[^\\\n\"]+		{
+\\(.|\n) 	{
+		addChars();
+		*array_buf_ptr++ = yytext[1];
+		}
+
+[^\\\n\"]+			{
 	char *yptr = yytext;
 	while(*yptr)
-		*string_buf_ptr++ = *yptr++;
+		*array_buf_ptr++ = *yptr++;
 					}
 }
 
-\n	numLinea++; numCharacter++;
 
-.	numCharacter++;
+	/*OPERATORS*/
+
+"/"		{ addChars();  return('/');}
+"/="	{ addChars();  return(OPE_SLASH_EQ);}
+"."		{ addChars();  return('.');}
+".."	{ addChars();  return(OPE_TWO_POINTS);}
+"..."	{ addChars();  return(OPE_THREE_POINTS);}
+"&"		{ addChars();  return('&');}
+"&="	{ addChars();  return(OPE_AND_EQ);}
+"&&"	{ addChars();  return(OPE_AND_AND);}
+"|"		{ addChars();  return('|');}
+"|="	{ addChars();  return(OPE_VERT_EQ);}
+"||"	{ addChars();  return(OPE_VERT_VERT);}
+"-"		{ addChars();  return('-');}
+"-="	{ addChars();  return(OPE_MINUS_EQ);}
+"--"	{ addChars();  return(OPE_MINUS_MINUS);}
+"+"		{ addChars();  return('+');}
+"+="	{ addChars();  return(OPE_PLUS_EQ);}
+"++"	{ addChars();  return(OPE_PLUS_PLUS);}
+"<"		{ addChars();  return('<');}
+"<="	{ addChars();  return(OPE_LESSTHAN_EQ);}
+"<<"	{ addChars();  return(OPE_LESSTHAN_LESSTHAN);}
+"<<="	{ addChars();  return(OPE_LESSTHAN_LESSTHAN_EQ);}
+"<>"	{ addChars();  return(OPE_LESSTHAN_MORETHAN);}
+"<>="	{ addChars();  return(OPE_LESSTHAN_MORETHAN_EQ);}
+">"		{ addChars();  return('>');}
+">="	{ addChars();  return(OPE_MORETHAN_EQ);}
+">>="	{ addChars();  return(OPE_MORETHAN_MORETHAN_EQ);}
+">>>="	{ addChars();  return(OPE_MORETHAN_MORETHAN_MORETHAN_EQ);}
+">>"	{ addChars();  return(OPE_MORETHAN_MORETHAN);}
+">>>"	{ addChars();  return(OPE_MORETHAN_MORETHAN_MORETHAN);}
+"!"		{ addChars();  return('!');}
+"!="	{ addChars();  return(OPE_EXCL_EQ);}
+"!<>"	{ addChars();  return(OPE_EXCL_LESSTHAN_MORETHAN);}
+"!<>="	{ addChars();  return(OPE_EXCL_LESSTHAN_MORETHAN_EQ);}
+"!<"	{ addChars();  return(OPE_EXCL_LESSTHAN);}
+"!<="	{ addChars();  return(OPE_EXCL_LESSTHAN_MORETHAN_EQ);}
+"!>"	{ addChars();  return(OPE_EXCL_MORETHAN);}
+"!>="	{ addChars();  return(OPE_EXCL_MORETHAN_EQ);}
+"("		{ addChars();  return('(');}
+")"		{ addChars();  return(')');}
+"["		{ addChars();  return('[');}
+"]"		{ addChars();  return(']');}
+"{"		{ addChars();  return('{');}
+"}"		{ addChars();  return('}');}
+"?"		{ addChars();  return('?');}
+","		{ addChars();  return(',');}
+";"		{ addChars();  return(';');}
+":"		{ addChars();  return(':');}
+"$"		{ addChars();  return('$');}
+"="		{ addChars();  return('=');}
+"=="	{ addChars();  return(OPE_EQ_EQ);}
+"*"		{ addChars();  return('*');}
+"*="	{ addChars();  return(OPE_TIMES_EQ);}
+"%"		{ addChars();  return('%');}
+"%="	{ addChars();  return(OPE_PERC_EQ);}
+"^"		{ addChars();  return('^');}
+"^="	{ addChars();  return(OPE_HAT_EQ);}
+"^^"	{ addChars();  return(OPE_HAT_HAT);}
+"^^="	{ addChars();  return(OPE_HAT_HAT_EQ);}
+~		{ addChars();  return('~');}
+~=		{ addChars();  return(OPE_VIRG_EQ);}
+@		{ addChars();  return('@');}
+=>		{ addChars();  return(OPE_EQ_MORE);}
+#		{ addChars();  return('#');}
+
+
+	/*SPACES*/
+
+{WhiteSpace}	{addChars();}
+
+
+<<EOF>>			{return(END_OF_FILE);}
+
+	/*WE DON'T KNOW*/
+
+.	{addChars();}
 
 
 
 %%		
 
+
   /*---------------USER_CODE---------------*/
 
-void main(int argc, char **argv){
+void readBlockComment(){
 
-	++argv,	--argc;/* se salta el nombre del programa */
-	if ( argc > 0 )
-		yyin = fopen( argv[0], "r" );
-	else
-		yyin = stdin;
-	yylex();
+	array_buf_ptr= array_buf;
 
-	printf("Lineas: %d, Caracteres: %d\n",numLinea, numCharacter);
+	char *yptr = yytext;
+	while(*yptr){
+		*array_buf_ptr++ = *yptr++;
+		updateWith(*yptr);
+	}
+
+	char c;
+
+	for(;;){
+		while( (c=input()) != '*' && c != EOF ){
+			*array_buf_ptr++=c;
+			updateWith(c);
+		}
+
+		*array_buf_ptr++=c;
+		updateWith(c);
+
+		if(c == '*'){
+
+			while ( (c=input()) == '*' ){
+				*array_buf_ptr++=c;
+				updateWith(c);
+			}
+
+			*array_buf_ptr++=c;
+			updateWith(c);
+
+			if(c == '/'){
+				*array_buf_ptr= '\0';
+				return;
+			}
+		}
+		if (c == EOF){
+			manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "Found end of file inside a comment", numLine, numCharacter);
+			return;
+		}
+	}
+
 }
+
+void readNestedComment(short first){
+
+
+	if(first){
+		array_buf_ptr= array_buf;
+		char *yptr = yytext;
+		while(*yptr){
+			*array_buf_ptr++ = *yptr++;
+			updateWith(*yptr);
+		}
+	}
+
+
+	char c;
+
+	for(;;){
+		while( (c=input()) != '+' && c != EOF ){
+			if(c == '/'){
+				*array_buf_ptr++=c;
+				updateWith(c);
+				while ( (c=input()) == '/' ){
+					*array_buf_ptr++=c;
+					updateWith(c);
+				}
+
+				*array_buf_ptr++=c;
+				updateWith(c);
+
+				if(c == '+'){
+					readNestedComment(0);
+				}
+			}else{
+				*array_buf_ptr++=c;
+				updateWith(c);
+			}
+		}
+
+		*array_buf_ptr++=c;
+		updateWith(c);
+
+		if(c == '+'){
+			while ( (c=input()) == '+' ){
+				*array_buf_ptr++=c;
+				updateWith(c);
+			}
+
+			*array_buf_ptr++=c;
+			updateWith(c);
+
+			if(c == '/'){
+				*array_buf_ptr= '\0';
+				return;
+			}
+		}
+		if (c == EOF){
+			manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "Found end of file inside a comment", numLine, numCharacter);
+			return;
+		}
+	}
+}
+
+void updateWith(char c){
+	if (c == '\n'){
+			numCharacter = 0;
+			numLine++;
+		}else if (c == '\t'){
+			numCharacter += 4 - (numCharacter % 4);
+		}else{
+			numCharacter++;
+		}
+}
+
+void addChars(){
+	int i;
+	for (i = 0; yytext[i] != '\0'; i++)
+		updateWith(yytext[i]);
+}
+
