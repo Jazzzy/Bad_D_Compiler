@@ -1,3 +1,0 @@
-/home/jazzzy/GitProjects/Bad_D_Compiler/bin/CMakeFiles/rebuild_cache.dir
-/home/jazzzy/GitProjects/Bad_D_Compiler/bin/CMakeFiles/edit_cache.dir
-/home/jazzzy/GitProjects/Bad_D_Compiler/bin/CMakeFiles/bdc.dir
