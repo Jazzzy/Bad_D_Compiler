@@ -35,6 +35,9 @@ void printMessageFor(int code) {
         case ERR_JUMP_LINE_IN_LITERAL:
             printf("Found a jump line inside a literal");
             break;
+        case ERR_SCAPE_CHAR:
+            printf("Unsupported scape character");
+            break;
         default:
             printf("No message for that code.");
             break;

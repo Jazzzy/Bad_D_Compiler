@@ -8,7 +8,8 @@ typedef enum {
     ERR_BAD_BINARY,
     ERR_LEXEME_TOO_LARGE,
     ERR_BAD_SCI_NO,
-    ERR_JUMP_LINE_IN_LITERAL
+    ERR_JUMP_LINE_IN_LITERAL,
+    ERR_SCAPE_CHAR
 } errorType;
 
 

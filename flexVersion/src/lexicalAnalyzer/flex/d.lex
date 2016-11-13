@@ -10,16 +10,11 @@
 
 extern symbolTable *global_st;
 
-#define MAX_STR_CONST 1024
-
 int numLine = 1,numCharacter=0;
+int nestedLevel = 1;
 
-char array_buf[MAX_STR_CONST];
-char *array_buf_ptr;
 
 void addChars();
-void readBlockComment();
-void readNestedComment(short first);
 void updateWith(char c);
 
 %}
@@ -27,6 +22,10 @@ void updateWith(char c);
   /*--------------DEFINITIONS--------------*/
 
 %x StringMODE
+%x DocumentationCommentMODE
+%x BlockCommentMODE
+%x NestedCommentMODE
+
 
 Character .
 
@@ -34,9 +33,13 @@ WhiteSpace [ \t\v\n\f]
 
 BegOfBlockComment "/*"
 
+EndOfBlockComment "*/"
+
 BegOfDocumentationComment "/**"[^/]
 
 BegOfNestedComment "/+"
+
+EndOfNestedComment "+/"
 
 BegOfLineComment "//"
 
@@ -62,20 +65,92 @@ SciNo [Ee][+-]?{Digit}+
 	/*COMMENTS*/
 
 {BegOfBlockComment}	{
-					readBlockComment();
+					BEGIN(BlockCommentMODE);
+					yymore();
 					}
 
+<BlockCommentMODE>{
+	
+{EndOfBlockComment}	{
+					addChars();
+					BEGIN(INITIAL);
+					}
+
+<<EOF>>				{
+					addChars();
+					BEGIN(INITIAL);
+					manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "Found end of file inside a comment", numLine, numCharacter);
+					}
+
+.|\n				yymore();
+
+}
+
+
 {BegOfDocumentationComment}	{
-					readBlockComment();
+					BEGIN(DocumentationCommentMODE);
+					yymore();
+					}
+
+<DocumentationCommentMODE>{
+	
+{EndOfBlockComment}	{
+					BEGIN(INITIAL);
+					addChars();
 					return(DOCUMENTATION_COMMENT);
 					}
+
+<<EOF>>				{
+					addChars();
+					BEGIN(INITIAL);
+					manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "Found end of file inside a comment", numLine, numCharacter);
+					yyrestart(yyin);
+					}
+
+.|\n				{
+					yymore();
+					}
+}
+
+
 
 
 {BegOfLineComment}.*\n {addChars();}
 
 {BegOfNestedComment}	{
-						readNestedComment(1);
+						yymore();
+						BEGIN(NestedCommentMODE);
+						nestedLevel = 1;
 						}
+
+<NestedCommentMODE>{
+	
+{BegOfNestedComment}	{
+						nestedLevel++;
+						yymore();
+						}
+
+{EndOfNestedComment}	{
+						if( (--nestedLevel) == 0){
+							addChars();
+							BEGIN(INITIAL);
+						}else{
+							yymore();
+							}
+						}
+						
+
+<<EOF>>               	{
+						addChars();
+						BEGIN(INITIAL);
+						manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "Found end of file inside a comment", numLine, numCharacter);
+						}
+
+.|\n					yymore();
+
+}
+
+
 
 	/*IDENTIFIERS OR RESERVED WORDS*/
 
@@ -108,7 +183,6 @@ SciNo [Ee][+-]?{Digit}+
 
 {Digit}({Digit}|_)* 	{
 						addChars();
-						//printf("Integer Literal: %s\n", yytext);
 						return(INTEGER_LITERAL);
 						}
 
@@ -116,7 +190,6 @@ SciNo [Ee][+-]?{Digit}+
 
 0(b|B)(0|1|_)+		{
 					addChars();
-					//printf("Binary Literal: %s\n", yytext);
 					return(BINARY_LITERAL);
 					}
 
@@ -133,72 +206,57 @@ SciNo [Ee][+-]?{Digit}+
 
 {CharacterLiteral} {
 					addChars();
-					//printf("Character Literal: %s\n", yytext);
 					return (CHARACTER_LITERAL);			
 					}
 
 	/*STRING LITERALS*/
 	
 {StringDelimiter}	{ 
-					//printf("Empezamos a leer string\n", yytext);
-					array_buf_ptr= array_buf;
 					BEGIN(StringMODE);
+					yymore();
 					}
 
 <StringMODE>{
 
 {StringDelimiter} {
 					BEGIN(INITIAL);
-					*array_buf_ptr= '\0';
 					addChars();
-					//printf("Acabamos: %s\n", array_buf);
 					return(STRING_LITERAL);
 					}
 
 \n 					{
-					addChars();
 					manageNonFatalErrorWithLine(ERR_JUMP_LINE_IN_LITERAL, "Found a jump line character inside a string literal", numLine, numCharacter);
+					yymore();
 					}
 
-\\n 	{
-		addChars();
-		*array_buf_ptr++ = '\n';
-		}
-
-
-\\t 	{
-		addChars();
-		*array_buf_ptr++ = '\t';
-		}
-
-\\r 	{
-		addChars();
-		*array_buf_ptr++ = '\r';
-		}
-
-\\b 	{
-		addChars();
-		*array_buf_ptr++ = '\b';
-		}
-
-\\f 	{
-		addChars();
-		*array_buf_ptr++ = '\f';
-		}
-
-\\(.|\n) 	{
-		addChars();
-		*array_buf_ptr++ = yytext[1];
-		}
-
-[^\\\n\"]+			{
-	char *yptr = yytext;
-	while(*yptr)
-		*array_buf_ptr++ = *yptr++;
+\\\'				|
+\\\"				|
+\\\?				|
+\\\\				|
+\\0					|
+\\a					|
+\\b					|
+\\f					|
+\\n					|
+\\r					|
+\\t					|
+\\v 				{
+					yymore();
 					}
+
+\\.					{
+					manageNonFatalErrorWithLine(ERR_SCAPE_CHAR, "Found a malformed scape character", numLine, numCharacter);
+					yymore();
+					}
+
+. 					{
+					yymore();
+					}
+
 
 <<EOF>>		{
 			addChars();
+			yyrestart(yyin);
 			manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "Found end of file inside a literal string", numLine, numCharacter);
 			}
 
@@ -277,9 +335,11 @@ SciNo [Ee][+-]?{Digit}+
 {WhiteSpace}	{addChars();}
 
 
+	/*END OF FILE*/
+
 <<EOF>>			{return(END_OF_FILE);}
 
-	/*WE DON'T KNOW*/
+	/*SOME OTHER THINGS*/
 
 .	{addChars();}
 
@@ -290,110 +350,6 @@ SciNo [Ee][+-]?{Digit}+
 
   /*---------------USER_CODE---------------*/
 
-void readBlockComment(){
-
-	array_buf_ptr= array_buf;
-
-	char *yptr = yytext;
-	while(*yptr){
-		*array_buf_ptr++ = *yptr++;
-		updateWith(*yptr);
-	}
-
-	char c;
-
-	for(;;){
-		while( (c=input()) != '*' && c != EOF ){
-			*array_buf_ptr++=c;
-			updateWith(c);
-		}
-
-		*array_buf_ptr++=c;
-		updateWith(c);
-
-		if(c == '*'){
-
-			while ( (c=input()) == '*' ){
-				*array_buf_ptr++=c;
-				updateWith(c);
-			}
-
-			*array_buf_ptr++=c;
-			updateWith(c);
-
-			if(c == '/'){
-				*array_buf_ptr= '\0';
-				return;
-			}
-		}
-		if (c == EOF){
-			manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "Found end of file inside a comment", numLine, numCharacter);
-			return;
-		}
-	}
-
-}
-
-void readNestedComment(short first){
-
-
-	if(first){
-		array_buf_ptr= array_buf;
-		char *yptr = yytext;
-		while(*yptr){
-			*array_buf_ptr++ = *yptr++;
-			updateWith(*yptr);
-		}
-	}
-
-
-	char c;
-
-	for(;;){
-		while( (c=input()) != '+' && c != EOF ){
-			if(c == '/'){
-				*array_buf_ptr++=c;
-				updateWith(c);
-				while ( (c=input()) == '/' ){
-					*array_buf_ptr++=c;
-					updateWith(c);
-				}
-
-				*array_buf_ptr++=c;
-				updateWith(c);
-
-				if(c == '+'){
-					readNestedComment(0);
-				}
-			}else{
-				*array_buf_ptr++=c;
-				updateWith(c);
-			}
-		}
-
-		*array_buf_ptr++=c;
-		updateWith(c);
-
-		if(c == '+'){
-			while ( (c=input()) == '+' ){
-				*array_buf_ptr++=c;
-				updateWith(c);
-			}
-
-			*array_buf_ptr++=c;
-			updateWith(c);
-
-			if(c == '/'){
-				*array_buf_ptr= '\0';
-				return;
-			}
-		}
-		if (c == EOF){
-			manageFatalErrorWithLine(ERR_UNEXPECTED_EOF, "Found end of file inside a comment", numLine, numCharacter);
-			return;
-		}
-	}
-}
 
 void updateWith(char c){
 	if (c == '\n'){

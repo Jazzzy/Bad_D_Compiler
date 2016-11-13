@@ -33,10 +33,6 @@ void deleteLexicalAnalyzer(lexicalAnalyzer **la) {
 }
 
 
-//Define this in order to send the lexeme to the syntactical analyzer
-#define SEND_DEBUG_DATA
-
-
 /**
  * Returns the next lexical component found by the lexical analyzer.
  *
@@ -48,45 +44,14 @@ lexemeComponentPackage getNextLexicalComponent(lexicalAnalyzer *la) {
 
 
     int component = yylex();
-    if (component == DOCUMENTATION_COMMENT || component == STRING_LITERAL) {
-        lcp.lexeme = (char *) malloc((strlen(array_buf) + 1) * sizeof(char));
-        strcpy(lcp.lexeme, array_buf);
-        lcp.lexicalComponent = component;
-        fillComponentStr(lcp.strLexicalComponent,component);
 
-    } else {
-        lcp.lexeme = (char *) malloc((strlen(yytext) + 1) * sizeof(char));
-        strcpy(lcp.lexeme, yytext);
-        lcp.lexicalComponent = component;
-        fillComponentStr(lcp.strLexicalComponent,component);
-    }
+    lcp.lexeme = (char *) malloc((strlen(yytext) + 1) * sizeof(char));
+    strcpy(lcp.lexeme, yytext);
+    lcp.lexicalComponent = component;
+    fillComponentStr(lcp.strLexicalComponent, component);
+
+
 
     return lcp;
 
 }
-
-/*
-void main(int argc, char **argv) {
-
-    ++argv, --argc;
-    if (argc > 0)
-        yyin = fopen(argv[0], "r");
-    else
-        yyin = stdin;
-
-    int component;
-
-    while ((
-                   component = yylex()
-           ) != END_OF_FILE) {
-        if (component == DOCUMENTATION_COMMENT || component == STRING_LITERAL) {
-            printf("Component %4d:\t%s\n", component, array_buf);
-        } else {
-            printf("Component %4d:\t%s\n", component, yytext);
-        }
-    }
-
-    printf("Lineas: %d, Caracteres: %d\n", numLine, numCharacter);
-}
-
-*/
