@@ -29,6 +29,7 @@ void initLexicalAnalyzer(lexicalAnalyzer **la, readerSystem *rs, symbolTable *st
  *
  * */
 void deleteLexicalAnalyzer(lexicalAnalyzer **la) {
+    yylex_destroy();        //Added this to avoid memory leaks from flex.
     free(*la);
 }
 

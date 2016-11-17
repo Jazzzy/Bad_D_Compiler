@@ -55,6 +55,7 @@ int main(int argc, char **argv) {
         free(lcp.lexeme);
         lcp = getNextLexicalComponent(la);
     }
+    free(lcp.lexeme);
 
     //We print the final state of the symbol table
     printSymbolTable(st);

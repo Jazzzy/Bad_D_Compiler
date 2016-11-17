@@ -561,19 +561,49 @@ static int yy_more_len = 0;
 char *yytext;
 #line 1 "d.lex"
 /* This is a lex scanner designed for (part of) the D language */
-#line 6 "d.lex"
-
+/*
+We make yywrap return 1 in order to finish everytime
+we find the end of the file.
+*/
+#line 10 "d.lex"
 
 #include "../../DLang/D_DEFINE_NON_RESERVED_WORDS.h"
 #include "../../symbolTable/symbolTable.h"
 
+/*
+Reference to the global symbol table
+*/
 extern symbolTable *global_st;
 
+/*
+We will use this variables to store the current line and
+the current position in that line in order to print them
+when we find an error.
+*/
 int numLine = 1,numCharacter=0;
+
+/*
+This variable stores the nested level we are in because
+we have to make sure we close all nested comments that we 
+open
+*/
 int nestedLevel = 1;
 
-
+/*
+addChars takes the current yytext and updates the numLine
+and numCharacter variables. It is usefull because we don't
+have to check for \n and update with every character.
+*/
 void addChars();
+
+
+/*
+This is the function that makes the check with one particular
+character and updates the numLine if it is a \n, setting the
+numCharacter to 0. With a normal character we just update the
+numCharacter. In the case we read a \t we update the numChar
+with 4 positions, considering a tab equal to 4 spaces.
+*/
 void updateWith(char c);
 
 /*--------------DEFINITIONS--------------*/
@@ -581,7 +611,7 @@ void updateWith(char c);
 
 
 
-#line 585 "lex.yy.c"
+#line 615 "lex.yy.c"
 
 #define INITIAL 0
 #define StringMODE 1
@@ -803,14 +833,14 @@ YY_DECL
 		}
 
 	{
-#line 61 "d.lex"
+#line 91 "d.lex"
 
 
   /*-----------------RULES-----------------*/
 	
 	/*COMMENTS*/
 
-#line 814 "lex.yy.c"
+#line 844 "lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -875,7 +905,7 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 67 "d.lex"
+#line 97 "d.lex"
 {
 					BEGIN(BlockCommentMODE);
 					yymore();
@@ -884,14 +914,14 @@ YY_RULE_SETUP
 
 case 2:
 YY_RULE_SETUP
-#line 74 "d.lex"
+#line 104 "d.lex"
 {
 					addChars();
 					BEGIN(INITIAL);
 					}
 	YY_BREAK
 case YY_STATE_EOF(BlockCommentMODE):
-#line 79 "d.lex"
+#line 109 "d.lex"
 {
 					addChars();
 					BEGIN(INITIAL);
@@ -901,14 +931,14 @@ case YY_STATE_EOF(BlockCommentMODE):
 case 3:
 /* rule 3 can match eol */
 YY_RULE_SETUP
-#line 85 "d.lex"
+#line 115 "d.lex"
 yymore();
 	YY_BREAK
 
 case 4:
 /* rule 4 can match eol */
 YY_RULE_SETUP
-#line 90 "d.lex"
+#line 120 "d.lex"
 {
 					BEGIN(DocumentationCommentMODE);
 					yymore();
@@ -917,7 +947,7 @@ YY_RULE_SETUP
 
 case 5:
 YY_RULE_SETUP
-#line 97 "d.lex"
+#line 127 "d.lex"
 {
 					BEGIN(INITIAL);
 					addChars();
@@ -925,7 +955,7 @@ YY_RULE_SETUP
 					}
 	YY_BREAK
 case YY_STATE_EOF(DocumentationCommentMODE):
-#line 103 "d.lex"
+#line 133 "d.lex"
 {
 					addChars();
 					BEGIN(INITIAL);
@@ -936,7 +966,7 @@ case YY_STATE_EOF(DocumentationCommentMODE):
 case 6:
 /* rule 6 can match eol */
 YY_RULE_SETUP
-#line 110 "d.lex"
+#line 140 "d.lex"
 {
 					yymore();
 					}
@@ -945,12 +975,12 @@ YY_RULE_SETUP
 case 7:
 /* rule 7 can match eol */
 YY_RULE_SETUP
-#line 118 "d.lex"
+#line 148 "d.lex"
 {addChars();}
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 120 "d.lex"
+#line 150 "d.lex"
 {
 						yymore();
 						BEGIN(NestedCommentMODE);
@@ -960,7 +990,7 @@ YY_RULE_SETUP
 
 case 9:
 YY_RULE_SETUP
-#line 128 "d.lex"
+#line 158 "d.lex"
 {
 						nestedLevel++;
 						yymore();
@@ -968,7 +998,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 133 "d.lex"
+#line 163 "d.lex"
 {
 						if( (--nestedLevel) == 0){
 							addChars();
@@ -979,7 +1009,7 @@ YY_RULE_SETUP
 						}
 	YY_BREAK
 case YY_STATE_EOF(NestedCommentMODE):
-#line 143 "d.lex"
+#line 173 "d.lex"
 {
 						addChars();
 						BEGIN(INITIAL);
@@ -989,43 +1019,48 @@ case YY_STATE_EOF(NestedCommentMODE):
 case 11:
 /* rule 11 can match eol */
 YY_RULE_SETUP
-#line 149 "d.lex"
+#line 179 "d.lex"
 yymore();
 	YY_BREAK
 
 /*IDENTIFIERS OR RESERVED WORDS*/
 case 12:
 YY_RULE_SETUP
-#line 157 "d.lex"
+#line 187 "d.lex"
 {
-				//Comprobar si puede ser una palabra reservada.
+				/*
+				Here we check if our alphanumeric string is in the symbol table and
+				if it is a reserved word or an identifier.
+				*/
 				addChars();
-
 				symbolData *sd = searchLex(global_st, yytext);
-
 				if (sd == NULL) {
+					/*It is an identifier and it is not on the table*/
 					sd = (symbolData *) malloc(sizeof(symbolData));
-                    sd->lexicalComponent = IDENTIFIER;
-                    sd->lexeme = (char *) malloc((strlen(yytext) + 1) * sizeof(char));
-                    strcpy(sd->lexeme,yytext);
+                    			sd->lexicalComponent = IDENTIFIER;
+                    			sd->lexeme = (char *) malloc((strlen(yytext) + 1) * sizeof(char));
+                    			strcpy(sd->lexeme,yytext);
+					/*So we add it*/
 					addLex(&global_st, sd->lexeme, sd);
-                    return(IDENTIFIER);
+                    			return(IDENTIFIER);
 				}else{
 					if (sd->lexicalComponent == IDENTIFIER) {
+					/*It is an identifier bu it is on the table already*/
 						return(IDENTIFIER);
 					}else{
+					/*It is a reserved word so we return the corresponding lexical component*/
 						return(sd->lexicalComponent);
 					}
 				}
 
 
 				
-				}
+		}
 	YY_BREAK
 /*INTEGER LITERALS*/
 case 13:
 YY_RULE_SETUP
-#line 184 "d.lex"
+#line 219 "d.lex"
 {
 						addChars();
 						return(INTEGER_LITERAL);
@@ -1034,7 +1069,7 @@ YY_RULE_SETUP
 /*BINARY LITERALS*/
 case 14:
 YY_RULE_SETUP
-#line 191 "d.lex"
+#line 226 "d.lex"
 {
 					addChars();
 					return(BINARY_LITERAL);
@@ -1042,10 +1077,10 @@ YY_RULE_SETUP
 	YY_BREAK
 /*FLOATING LITERALS*/
 case 15:
-#line 199 "d.lex"
+#line 234 "d.lex"
 case 16:
 YY_RULE_SETUP
-#line 199 "d.lex"
+#line 234 "d.lex"
 {
 									addChars();
 									return(FLOAT_LITERAL);
@@ -1054,7 +1089,7 @@ YY_RULE_SETUP
 /*SINGLE CHARACTER LITERALS*/
 case 17:
 YY_RULE_SETUP
-#line 207 "d.lex"
+#line 242 "d.lex"
 {
 					addChars();
 					return (CHARACTER_LITERAL);			
@@ -1063,7 +1098,7 @@ YY_RULE_SETUP
 /*STRING LITERALS*/
 case 18:
 YY_RULE_SETUP
-#line 214 "d.lex"
+#line 249 "d.lex"
 { 
 					BEGIN(StringMODE);
 					yymore();
@@ -1072,7 +1107,7 @@ YY_RULE_SETUP
 
 case 19:
 YY_RULE_SETUP
-#line 221 "d.lex"
+#line 256 "d.lex"
 {
 					BEGIN(INITIAL);
 					addChars();
@@ -1082,58 +1117,60 @@ YY_RULE_SETUP
 case 20:
 /* rule 20 can match eol */
 YY_RULE_SETUP
-#line 227 "d.lex"
+#line 262 "d.lex"
 {
 					manageNonFatalErrorWithLine(ERR_JUMP_LINE_IN_LITERAL, "Found a jump line character inside a string literal", numLine, numCharacter);
 					yymore();
 					}
 	YY_BREAK
 case 21:
-#line 233 "d.lex"
+#line 268 "d.lex"
 case 22:
-#line 234 "d.lex"
+#line 269 "d.lex"
 case 23:
-#line 235 "d.lex"
+#line 270 "d.lex"
 case 24:
-#line 236 "d.lex"
+#line 271 "d.lex"
 case 25:
-#line 237 "d.lex"
+#line 272 "d.lex"
 case 26:
-#line 238 "d.lex"
+#line 273 "d.lex"
 case 27:
-#line 239 "d.lex"
+#line 274 "d.lex"
 case 28:
-#line 240 "d.lex"
+#line 275 "d.lex"
 case 29:
-#line 241 "d.lex"
+#line 276 "d.lex"
 case 30:
-#line 242 "d.lex"
+#line 277 "d.lex"
 case 31:
-#line 243 "d.lex"
+#line 278 "d.lex"
 case 32:
 YY_RULE_SETUP
-#line 243 "d.lex"
+#line 278 "d.lex"
 {
+					/*We check here for all valid scaped characters*/
 					yymore();
 					}
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 247 "d.lex"
+#line 283 "d.lex"
 {
+					/*Throw error when it is not a valid scaped char*/
 					manageNonFatalErrorWithLine(ERR_SCAPE_CHAR, "Found a malformed scape character", numLine, numCharacter);
 					yymore();
 					}
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 252 "d.lex"
+#line 289 "d.lex"
 {
 					yymore();
 					}
 	YY_BREAK
 case YY_STATE_EOF(StringMODE):
-#line 257 "d.lex"
+#line 294 "d.lex"
 {
 			addChars();
 			yyrestart(yyin);
@@ -1144,343 +1181,343 @@ case YY_STATE_EOF(StringMODE):
 /*OPERATORS*/
 case 35:
 YY_RULE_SETUP
-#line 268 "d.lex"
+#line 305 "d.lex"
 { addChars();  return('/');}
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 269 "d.lex"
+#line 306 "d.lex"
 { addChars();  return(OPE_SLASH_EQ);}
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 270 "d.lex"
+#line 307 "d.lex"
 { addChars();  return('.');}
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 271 "d.lex"
+#line 308 "d.lex"
 { addChars();  return(OPE_TWO_POINTS);}
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 272 "d.lex"
+#line 309 "d.lex"
 { addChars();  return(OPE_THREE_POINTS);}
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 273 "d.lex"
+#line 310 "d.lex"
 { addChars();  return('&');}
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 274 "d.lex"
+#line 311 "d.lex"
 { addChars();  return(OPE_AND_EQ);}
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 275 "d.lex"
+#line 312 "d.lex"
 { addChars();  return(OPE_AND_AND);}
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 276 "d.lex"
+#line 313 "d.lex"
 { addChars();  return('|');}
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 277 "d.lex"
+#line 314 "d.lex"
 { addChars();  return(OPE_VERT_EQ);}
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 278 "d.lex"
+#line 315 "d.lex"
 { addChars();  return(OPE_VERT_VERT);}
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 279 "d.lex"
+#line 316 "d.lex"
 { addChars();  return('-');}
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 280 "d.lex"
+#line 317 "d.lex"
 { addChars();  return(OPE_MINUS_EQ);}
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 281 "d.lex"
+#line 318 "d.lex"
 { addChars();  return(OPE_MINUS_MINUS);}
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 282 "d.lex"
+#line 319 "d.lex"
 { addChars();  return('+');}
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 283 "d.lex"
+#line 320 "d.lex"
 { addChars();  return(OPE_PLUS_EQ);}
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 284 "d.lex"
+#line 321 "d.lex"
 { addChars();  return(OPE_PLUS_PLUS);}
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 285 "d.lex"
+#line 322 "d.lex"
 { addChars();  return('<');}
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 286 "d.lex"
+#line 323 "d.lex"
 { addChars();  return(OPE_LESSTHAN_EQ);}
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 287 "d.lex"
+#line 324 "d.lex"
 { addChars();  return(OPE_LESSTHAN_LESSTHAN);}
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 288 "d.lex"
+#line 325 "d.lex"
 { addChars();  return(OPE_LESSTHAN_LESSTHAN_EQ);}
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 289 "d.lex"
+#line 326 "d.lex"
 { addChars();  return(OPE_LESSTHAN_MORETHAN);}
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 290 "d.lex"
+#line 327 "d.lex"
 { addChars();  return(OPE_LESSTHAN_MORETHAN_EQ);}
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 291 "d.lex"
+#line 328 "d.lex"
 { addChars();  return('>');}
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 292 "d.lex"
+#line 329 "d.lex"
 { addChars();  return(OPE_MORETHAN_EQ);}
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 293 "d.lex"
+#line 330 "d.lex"
 { addChars();  return(OPE_MORETHAN_MORETHAN_EQ);}
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 294 "d.lex"
+#line 331 "d.lex"
 { addChars();  return(OPE_MORETHAN_MORETHAN_MORETHAN_EQ);}
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 295 "d.lex"
+#line 332 "d.lex"
 { addChars();  return(OPE_MORETHAN_MORETHAN);}
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 296 "d.lex"
+#line 333 "d.lex"
 { addChars();  return(OPE_MORETHAN_MORETHAN_MORETHAN);}
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 297 "d.lex"
+#line 334 "d.lex"
 { addChars();  return('!');}
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 298 "d.lex"
+#line 335 "d.lex"
 { addChars();  return(OPE_EXCL_EQ);}
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 299 "d.lex"
+#line 336 "d.lex"
 { addChars();  return(OPE_EXCL_LESSTHAN_MORETHAN);}
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 300 "d.lex"
+#line 337 "d.lex"
 { addChars();  return(OPE_EXCL_LESSTHAN_MORETHAN_EQ);}
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 301 "d.lex"
+#line 338 "d.lex"
 { addChars();  return(OPE_EXCL_LESSTHAN);}
 	YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 302 "d.lex"
+#line 339 "d.lex"
 { addChars();  return(OPE_EXCL_LESSTHAN_MORETHAN_EQ);}
 	YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 303 "d.lex"
+#line 340 "d.lex"
 { addChars();  return(OPE_EXCL_MORETHAN);}
 	YY_BREAK
 case 71:
 YY_RULE_SETUP
-#line 304 "d.lex"
+#line 341 "d.lex"
 { addChars();  return(OPE_EXCL_MORETHAN_EQ);}
 	YY_BREAK
 case 72:
 YY_RULE_SETUP
-#line 305 "d.lex"
+#line 342 "d.lex"
 { addChars();  return('(');}
 	YY_BREAK
 case 73:
 YY_RULE_SETUP
-#line 306 "d.lex"
+#line 343 "d.lex"
 { addChars();  return(')');}
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
-#line 307 "d.lex"
+#line 344 "d.lex"
 { addChars();  return('[');}
 	YY_BREAK
 case 75:
 YY_RULE_SETUP
-#line 308 "d.lex"
+#line 345 "d.lex"
 { addChars();  return(']');}
 	YY_BREAK
 case 76:
 YY_RULE_SETUP
-#line 309 "d.lex"
+#line 346 "d.lex"
 { addChars();  return('{');}
 	YY_BREAK
 case 77:
 YY_RULE_SETUP
-#line 310 "d.lex"
+#line 347 "d.lex"
 { addChars();  return('}');}
 	YY_BREAK
 case 78:
 YY_RULE_SETUP
-#line 311 "d.lex"
+#line 348 "d.lex"
 { addChars();  return('?');}
 	YY_BREAK
 case 79:
 YY_RULE_SETUP
-#line 312 "d.lex"
+#line 349 "d.lex"
 { addChars();  return(',');}
 	YY_BREAK
 case 80:
 YY_RULE_SETUP
-#line 313 "d.lex"
+#line 350 "d.lex"
 { addChars();  return(';');}
 	YY_BREAK
 case 81:
 YY_RULE_SETUP
-#line 314 "d.lex"
+#line 351 "d.lex"
 { addChars();  return(':');}
 	YY_BREAK
 case 82:
 YY_RULE_SETUP
-#line 315 "d.lex"
+#line 352 "d.lex"
 { addChars();  return('$');}
 	YY_BREAK
 case 83:
 YY_RULE_SETUP
-#line 316 "d.lex"
+#line 353 "d.lex"
 { addChars();  return('=');}
 	YY_BREAK
 case 84:
 YY_RULE_SETUP
-#line 317 "d.lex"
+#line 354 "d.lex"
 { addChars();  return(OPE_EQ_EQ);}
 	YY_BREAK
 case 85:
 YY_RULE_SETUP
-#line 318 "d.lex"
+#line 355 "d.lex"
 { addChars();  return('*');}
 	YY_BREAK
 case 86:
 YY_RULE_SETUP
-#line 319 "d.lex"
+#line 356 "d.lex"
 { addChars();  return(OPE_TIMES_EQ);}
 	YY_BREAK
 case 87:
 YY_RULE_SETUP
-#line 320 "d.lex"
+#line 357 "d.lex"
 { addChars();  return('%');}
 	YY_BREAK
 case 88:
 YY_RULE_SETUP
-#line 321 "d.lex"
+#line 358 "d.lex"
 { addChars();  return(OPE_PERC_EQ);}
 	YY_BREAK
 case 89:
 YY_RULE_SETUP
-#line 322 "d.lex"
+#line 359 "d.lex"
 { addChars();  return('^');}
 	YY_BREAK
 case 90:
 YY_RULE_SETUP
-#line 323 "d.lex"
+#line 360 "d.lex"
 { addChars();  return(OPE_HAT_EQ);}
 	YY_BREAK
 case 91:
 YY_RULE_SETUP
-#line 324 "d.lex"
+#line 361 "d.lex"
 { addChars();  return(OPE_HAT_HAT);}
 	YY_BREAK
 case 92:
 YY_RULE_SETUP
-#line 325 "d.lex"
+#line 362 "d.lex"
 { addChars();  return(OPE_HAT_HAT_EQ);}
 	YY_BREAK
 case 93:
 YY_RULE_SETUP
-#line 326 "d.lex"
+#line 363 "d.lex"
 { addChars();  return('~');}
 	YY_BREAK
 case 94:
 YY_RULE_SETUP
-#line 327 "d.lex"
+#line 364 "d.lex"
 { addChars();  return(OPE_VIRG_EQ);}
 	YY_BREAK
 case 95:
 YY_RULE_SETUP
-#line 328 "d.lex"
+#line 365 "d.lex"
 { addChars();  return('@');}
 	YY_BREAK
 case 96:
 YY_RULE_SETUP
-#line 329 "d.lex"
+#line 366 "d.lex"
 { addChars();  return(OPE_EQ_MORE);}
 	YY_BREAK
 case 97:
 YY_RULE_SETUP
-#line 330 "d.lex"
+#line 367 "d.lex"
 { addChars();  return('#');}
 	YY_BREAK
 /*SPACES*/
 case 98:
 /* rule 98 can match eol */
 YY_RULE_SETUP
-#line 335 "d.lex"
+#line 372 "d.lex"
 {addChars();}
 	YY_BREAK
 /*END OF FILE*/
 case YY_STATE_EOF(INITIAL):
-#line 340 "d.lex"
+#line 377 "d.lex"
 {return(END_OF_FILE);}
 	YY_BREAK
 /*SOME OTHER THINGS*/
 case 99:
 YY_RULE_SETUP
-#line 344 "d.lex"
+#line 381 "d.lex"
 {addChars();}
 	YY_BREAK
 case 100:
 YY_RULE_SETUP
-#line 348 "d.lex"
+#line 385 "d.lex"
 ECHO;
 	YY_BREAK
-#line 1484 "lex.yy.c"
+#line 1521 "lex.yy.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2479,7 +2516,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 348 "d.lex"
+#line 385 "d.lex"
 
 
 
@@ -2503,5 +2540,4 @@ void addChars(){
 	for (i = 0; yytext[i] != '\0'; i++)
 		updateWith(yytext[i]);
 }
-
 
